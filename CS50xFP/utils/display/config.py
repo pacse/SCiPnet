@@ -21,42 +21,54 @@ from collections import defaultdict
 import logging
 logging.getLogger('markdown_it').setLevel(logging.WARNING)
 
-# Mayuk numbers
+
+# terminal size calculation
+def _get_term_width() -> int:
+    """gets terminal width, adjusted to be even"""
+    try:
+        from os import get_terminal_size
+        width = get_terminal_size().columns
+
+        width = width - (width % 2) # make even
+
+        # validate size
+        if width < MIN_TERM_WIDTH:
+            raise RuntimeError(
+                f'Terminal too small: {width} columns '
+                f'(minimum required: {MIN_TERM_WIDTH})'
+            )
+
+    except Exception as e:
+        raise RuntimeError(
+            f'Could not get terminal size:\n{e}'
+        ) from e
+
+    return width
+
+
+# === Mayuk size constants ===
+
 MIN_TERM_WIDTH = 120
 """Minimum terminal width required for proper display"""
 
 BAR_WIDTH = 58
-"""Width of bars used in user/site/SCP/MTF display"""
+"""Width of text areas used in user/site/SCP/MTF display"""
+
+ACS_TOP_BAR_WIDTH = 32
+"""Width of left/right text areas of the ACS top bar"""
 
 BOX_SIZE = 35 # fits most messages nicely
 """Default box size for boxed messages"""
 
+SIZE = _get_term_width()
+"""Terminal width in columns, adjusted to be even"""
 
-"""Validate terminal size"""
-try:
-    from os import get_terminal_size
-
-    SIZE = get_terminal_size().columns
-    SIZE = SIZE if SIZE % 2 == 0 else SIZE-1  # type: ignore
-
-except OSError:
-    raise Exception('Could not get terminal size')
-except ImportError:
-    raise Exception(
-        'Thou does not have files pertaining to the OS module.'
-        ' Thou art a magician. HOW!'
-    )
-
-if SIZE < MIN_TERM_WIDTH:
-    raise Exception(
-        f'Requires terminal size of {MIN_TERM_WIDTH}'
-        f' columns (current size {SIZE})'
-        )
+LEFT_PADDING = ' ' * ((SIZE - MIN_TERM_WIDTH) // 2)
+"""Spaces to center 120 char content in terminal"""
 
 
-HEX_CODE_REGEX = r'#[0-9A-F]{6}'
 
-
+# === Colour Configurations ===
 
 CLEAR_LVL_COLOURS = [
     '',
@@ -74,7 +86,8 @@ index is level
 (eg, COLOURS[1] is used for clearance level 1)
 """
 
-OTHER_CONT_CLASS = '#6A6A6A'  # grey for all containment classes
+
+OTHER_CONT_CLASS = 'dim'  # grey for all containment classes
 """Hex colour code used for containment classes not in CONT_CLASS_COLOURS"""
 
 CONT_CLASS_COLOURS = defaultdict(
@@ -85,9 +98,8 @@ CONT_CLASS_COLOURS = defaultdict(
         'Keter': CLEAR_LVL_COLOURS[5],
     }
 )
-
 """
-Hex colour codes used in containment class rendering
+Hex colour codes used in containment class & secondary class rendering
 
 ALWAYS USE `.get()` TO ACCESS THIS DICT
 
