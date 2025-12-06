@@ -2,235 +2,273 @@
 Helpers for printing piped lines and `print_piped_line()`
 """
 
+# === Imports ===
 
-from ...config import HEX_CODE_REGEX, SIZE, MIN_TERM_WIDTH
+from ...config import BAR_WIDTH, LEFT_PADDING
 from ....sql.exceptions import FieldError
 
 from rich.console import Console
 from rich.text import Text
 from typing import Literal
-from re import fullmatch
 
 
 
 # === Helpers ===
 
-def _ne_print(string: str) -> None:
-    """ prints string without a newline """
-    print(string, end='')
-
-
-def _calc_line_space(
-                    string: str,
-                    line_width: int,
-                    bar_width: int | None = None
-                   ) -> tuple[int, int, bool]:
-    """
-    Calculate outer & inner spacing for piped lines
-    as well as whether or not an extra space is needed
-    for centering
-
-    returns (outer_space, inner_space, use_extra)
-    """
-    outer_space = bar_width if bar_width else (SIZE - MIN_TERM_WIDTH) // 2
-
-    inner_space = (line_width - len(string)) // 2
-
-    # do we need extra space?
-    if inner_space * 2 != (line_width - len(string)):
-        use_extra = True
-    else:
-        use_extra = False
-
-    return outer_space, inner_space, use_extra
-
-def _handle_space(
-                 outer_space: int,
-                 inner_space: int,
-                 use_extra: bool,
-                 side: Literal['l', 'r', 'c'] = 'l',
-                 is_left: bool = True,
-                 cols: int = 2
-                ) -> bool:
-
-    """
-    Handles line spacing logic
-    """
-    # input validation
-    if side not in ['l', 'r', 'c']:
-        raise FieldError(
-            'side', side, "'l', 'r', or 'c'"
-        )
-
-    if cols not in [2, 3]:
-        raise FieldError(
-            'columns', cols, '2 or 3'
-        )
-
-
-    # column seperator to use
-    col_sep = {2:'║║', 3:'║'}[cols]
-
-    # left of the text
-    if is_left:
-        if side == 'l':
-            # we need outer space
-            _ne_print(f'{' ' * outer_space}║{' ' * inner_space}')
-
-
-        else:
-            # no outer space
-            _ne_print(f'{col_sep}{' ' * inner_space}')
-
-
-        if use_extra or (side == 'c' and use_extra):
-            _ne_print(' ')
-            use_extra = not use_extra
-
-
-    # right of the text
-    else:
-        _ne_print(f'{' ' * inner_space}{' ' if use_extra else ''}')
-
-        if side == 'r':
-            # move to a newline
-            print('║')
-
-
-    return use_extra
-
-
-def _print_str(
-               console: Console,
-               string: str,
-
-               hex_code: str | None = None,
-               bold: bool = True,
-               default_colouring: bool = False,
-
-               end: str = ''
-              ) -> None:
-    """
-    prints `string` to `console` with
-    optional `hex_code` colouring.
-
-    Overrides default markdown colouring if `hex_code` is provided
-    """
-    # validate hex_code
-    if hex_code and not fullmatch(HEX_CODE_REGEX, hex_code):
-        raise ValueError(f'Invalid hex code {hex_code!r}')
-
-    # other validation
-    if hex_code and default_colouring:
-        raise ValueError(
-            'Cannot use hex_code with default_colouring = True'
-        )
-
-
-    # build style string
-    if hex_code:
-        style_str = f'{hex_code} bold'
-
-    elif bold:
-        style_str = 'bold'
-
-    elif not default_colouring:
-        style_str = None
-
-
-
-    # print
-    if not default_colouring:
-        console.print(Text(string), style = style_str, end = end)
-    else:
-        console.print(string, style = style_str, end = end)
-
-
-def _print_formatted_text(
-                         console: Console,
-                         string: str,
-                         hex_colour: str | None = None,
-                         default_colouring: bool = False
-                        ) -> None:
+# Text formatting
+def _format_label_val_text(
+                           string: str,
+                           colour: str | None = None,
+                          ) -> tuple[Text, Text | str]:
     """
     Formats text for piped line printing
+
+    Parameters
+    ----------
+    string : str
+        Text to format
+    colour : str or None, optional
+        hex colour code or Rich colour name for text styling.
+        If None, uses default styling.
+
+    Returns
+    -------
+    Label : Text
+        Formatted label text
+    Value : Text or str
+        Formatted value text
+
+    Raises
+    ------
+    ValueError
+        If `string` does not contain a colon
+
+    Examples
+    --------
+    >>> _format_label_val_text('Label: Value', '#FF0000')
+    (Text('Label:', style='bold'), Text(' Value', style='#FF0000'))
+
+    >>> _format_label_val_text('Label: Value')
+    (Text('Label:', style='bold'), ' Value')
     """
     # formatting only applies after the colon
     split_string = string.split(':', 1)
 
     # input validation
-    if len(split_string) != 2 or ':' in split_string[1]:
-        raise ValueError((
-                          'ERROR WITH _print_formatted_text: Invalid string'
-                          f' {string!r}. Must contain a single colon (:).'
-                        ))
+    if len(split_string) != 2:
+        raise FieldError('string', string, 'Must contain a colon.')
 
     # first string is bold
-    _ne_print(f'{split_string[0]}:')
+    str_1 = Text(f'{split_string[0]}:', 'bold')
 
     # now second string
-    _print_str(
-               console, split_string[1], hex_colour,
-               True, default_colouring
-              )
+    if split_string[1].strip() in ['[DATA EXPUNGED]', 'None']:
+        str_2 = Text(split_string[1], 'dim')
+    elif colour:
+        str_2 = Text(split_string[1], colour)
+    else:
+        str_2 = split_string[1]
+
+    return (str_1, str_2)
 
 
-
-# === Main Function ===
-
-def print_piped_line(console: Console,
-                     string: str,
-                     side: Literal['l', 'r', 'c'],
-                     hex_colour: str | None = None,
-                     width: int = 58,
-                     outer_space: int | None = None,
-                     default_colouring: bool = False,
-                     cols: int = 2
-                    ) -> None:
+# spacing calculations
+def _calc_spacing(
+                  string: str,
+                  content_width: int,
+                  side: Literal['l', 'r', 'c']
+                 ) -> tuple[str, str]:
     """
-    Renders a piped line to the console
+    Calculates spacing for piped line printing
 
-    eg "  ║    Example: Text Here    ║   "
+    Parameters
+    ----------
+    string : str
+        Text to print
+    content_width : int
+        Width of the line content area
+    side : {'l', 'r', 'c'}
+        Which side of the bar the line is on
 
-    Args:
-        console: Console to print to
-        string: Text to print
-        side: Side to align text to ('l', 'r', 'c')
-        hex_colour: Optional hex colour code for text
-        width: Width of the line (default 58)
-        outer_space: Optional outer spacing (default calculated)
-        default_colouring: Whether or not to use default console colouring
-        cols: Number of columns (2 or 3)
+    Returns
+    -------
+    left_padding : str
+        Spaces before text
+    right_padding : str
+        Spaces after text
+
+    Raises
+    ------
+    ValueError
+        - If `side` is not 'l', 'r', or 'c'
+        - If string is too long to fit in content_width
+
+    Examples
+    --------
+    >>> _calc_spacing('Label: Value', 30, 'l')
+    (' ' * 9, ' ' * 9)
+    >>> _calc_spacing('Label: 01', 30, 'r')
+    (' ' * 10, ' ' * 11)
     """
 
     # input validation
     if side not in ['l', 'r', 'c']:
-        raise ValueError(
-            f"Invalid side choice {side!r}. Must be 'l', 'r', or 'c'."
+        raise FieldError('side', side, "'l', 'r', or 'c'")
+
+
+    available_space = content_width - len(string)
+
+    if available_space < 0:
+        raise FieldError(
+            'string', string,
+            f'string to fit in content_width ({content_width})'
         )
 
+    padding = ' ' * (available_space // 2)
+    extra = ' ' * (available_space % 2)
+
+    if side == 'l':
+        return f'{padding}{extra}', padding
+
+    else:
+        return padding, f'{padding}{extra}'
+
+
+# determine column seperators
+def _get_pipe_seps(cols: Literal[2, 3],
+                   side: Literal['l', 'r', 'c']
+                  ) -> tuple[str, str]:
+    if cols == 2:
+        left_sep  = '║' if side == 'l' else '║║'
+    elif cols == 3:
+        left_sep  = '║'
+    else: # validation
+        raise FieldError('cols', cols, '2 or 3')
+
+    right_sep = '║' if side == 'r' else '' # same for 2 & 3 cols
+
+    return left_sep, right_sep
+
+
+
+# === Main Functions ===
+
+def print_centered_line(console: Console,
+                        string: str,
+                        side: Literal['l', 'r', 'c'],
+                        colour: str | None = None,
+                        content_width: int = BAR_WIDTH,
+                       ) -> None:
+    """
+    Renders a formatted centered line to the console
+    String must contain a colon and fit in content width
+
+    Parameters
+    ----------
+    console : Console
+        Console to print to
+    string : str
+        Text to print
+    side : {'l', 'r', 'c'}
+        Which side of the bar the line is on: (affects placement of extra space if needed)
+
+        - 'l': left side
+        - 'r': right side
+        - 'c': center
+    colour : str or None, optional
+        hex colour code or Rich colour name for text styling.
+        If None, uses default styling.
+    content_width : int, default=BAR_WIDTH
+        Width of the line content area
+
+    Raises
+    ------
+    ValueError
+        - If `side` is not 'l', 'r', or 'c'
+        - If `string` does not contain a colon
+        - If `string` is too long to fit in content width
+
+    Example
+    -------
+    >>> print_centered_line(console, 'Label: Value', 'l', content_width=28)
+    '        Label: Value        '  # printed to console
+    """
 
     # calculate spacing
-    outer_space, inner_space, use_extra = _calc_line_space(
-                                                string, width, outer_space
-                                            )
+    left_padding, right_padding = _calc_spacing(string, content_width, side)
 
-    # handle spacing on left side of line
-    use_extra = _handle_space(
-                    outer_space, inner_space,
-                    use_extra, side, True, cols
-                )
+    # format text
+    label_text, value_text = _format_label_val_text(string, colour)
 
     # print line
-    _print_formatted_text(
-                         console,
-                         string,
-                         hex_colour,
-                         default_colouring
-                        )
+    console.print(
+                  left_padding, label_text,
+                  value_text, right_padding,
+                  end='', sep=''
+                 )
 
-    # print right space
-    use_extra = _handle_space(
-                    outer_space, inner_space,
-                    use_extra, side, False, cols
-                )
+
+def print_piped_line(console: Console,
+                     string: str,
+                     side: Literal['l', 'r', 'c'],
+                     colour: str | None = None,
+                     content_width: int = BAR_WIDTH,
+                     cols: Literal[2, 3] = 2
+                    ) -> None:
+    """
+    Renders a piped, formatted centered line to the console
+    String must contain a colon and fit in content width
+
+    Parameters
+    ----------
+    console : Console
+        Console to print to
+    string : str
+        Text to print
+    side : {'l', 'r', 'c'}
+        Which side of the bar the line is on: (affects placement of extra space if needed)
+        - 'l': left side
+        - 'r': right side
+        - 'c': center
+    colour : str or None, optional
+        hex colour code or Rich colour name for text styling.
+        If None, uses default styling.
+    content_width : int, default=BAR_WIDTH
+        Width of the line content area
+    cols : {2, 3}, default=2
+        Number of columns in the bar:
+        - 2: left and right sides
+        - 3: left, center, and right sides
+
+    Raises
+    ------
+    ValueError
+        - If `side` is not 'l', 'r', or 'c'
+        - If `string` does not contain a colon
+        - If `string` is too long to fit in content width
+        - If `cols` is not 2 or 3
+        - if `side` is 'c' and `cols` is 2
+
+    Example
+    -------
+    >>> print_piped_line(console, 'Label: Value', 'l', content_width=28)
+    '║        Label: Value        '  # printed to console
+    """
+
+    # validation
+    if cols == 2 and side == 'c':
+        raise FieldError('side', side, "'l' or 'r' for 2-column bars")
+
+    left_sep, right_sep = _get_pipe_seps(cols, side)
+
+    if side == 'l':
+        left_sep = f'{LEFT_PADDING}{left_sep}'
+
+    print(left_sep, end='')
+
+    print_centered_line(
+                        console, string, side,
+                        colour, content_width
+                       )
+
+    print(right_sep, end = ('\n' if side == 'r' else ''))
