@@ -105,6 +105,7 @@ class SCP(ORMBase):
     A dataclass to store a SCP's information
     after getting its data from the deepwell
     """
+    name: str # SCP codename, eg 'The "Living" Room' (002)
     clearance_lvl: IDandName
 
     containment_class: IDandName
