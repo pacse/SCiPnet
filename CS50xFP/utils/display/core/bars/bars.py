@@ -7,11 +7,9 @@ Contains:
 """
 
 
-from .null_processors import ProcessedData as PD
 from .template import BarTemplate
-from ...config import CLEAR_LVL_COLOURS, CONT_CLASS_COLOURS
-from ...helpers import printc
-from ....sql.models import Models
+from ...config import CLEAR_LVL_COLOURS
+from ....sql.null_processors import ProcessedData as PD
 
 from rich.console import Console
 
@@ -30,49 +28,73 @@ def acs_bar(
     """
 
     # init base render class
-    base = BarTemplate(console, is_acs = True)
+    base = BarTemplate(console, triple_top=True)
 
     # === Render ===
 
     base._render_sep('t')
 
-    base.render_lines(
-                      [
-                       f'Item #: SCP-{info.id:03d}',
-                       f'Classification Level: {info.clearance_lvl.name}'
-                      ],
-                      [None, CLEAR_LVL_COLOURS[info.clearance_lvl.id]],
-                      [True, False],
-                     )
+    base.render_top_line([
+                          (info.id_str, None),
+                          (info.name_str, None),
+                          (info.clear_lvl_str,
+                           CLEAR_LVL_COLOURS[info.clear_lvl_id])
+                        ])
 
-    base._render_sep('m')
+    base._render_sep('lt')
 
     base.render_lines(
                       [
-                       f'Containment Class: {info.containment_class}',
-                       f'Disruption Class: {info.disrupt_class}',
-                       f'Secondary Class: {info.secondary_class}',
-                       f'Risk Class: {info.risk_class}'
+                       base._gen_classification_args('Containment',
+                                                     info.cnt_class),
+                       (f'Disruption Class: {info.disrupt_class}',
+                        info.disrupt_class_hex),
+                       base._gen_classification_args('Secondary',
+                                                     info.scnd_class),
+                       (f'Risk Class: {info.risk_class}',
+                        info.risk_class_hex)
                       ],
-                      [
-                       CONT_CLASS_COLOURS.get(info.containment_class),
-                       processed.disrupt_class_hex,
-                       CONT_CLASS_COLOURS.get(info.secondary_class),
-                       processed.risk_class_hex
-                      ],
-                      [False] * 4,
     )
 
     base._render_sep('m')
 
-    base.render_lines(
-        texts = [
-                 f'Site Responsible: {info.site_resp}',
-                 f'Assigned MTF: {info.mtf_name}'
-                ],
-        hex_colours = [None] * 2,
-        default_colourings = [True] * 2,
-    )
+    base.render_lines([
+                       (f'Site Responsible: {info.site_resp}', None),
+                       (f'Assigned MTF: {info.mtf_str}', None)
+                     ])
+
+    base._render_sep('b')
+
+
+def mtf_bar(
+            info: PD.MTF,
+            console: Console | None = None
+           ) -> None:
+    """
+    Displays a bar for provided MTF info
+    Args:
+        info (ProcessedData.MTF): MTF info to display
+        console (Console | None): Console to print to
+    """
+
+    # init base render class
+    base = BarTemplate(console, triple_top=True)
+
+    # === Render ===
+    base._render_sep('t')
+
+    base.render_top_line([
+                          (info.name_str, None),
+                          (info.nickname, None),
+                          (info.active, None)
+                        ])
+
+    base._render_sep('lt')
+
+    base.render_lines([
+                       (f'Assigned Site: {info.site}', None),
+                       (f'Leader: {info.leader_str}', None)
+                     ])
 
     base._render_sep('b')
 
@@ -91,51 +113,20 @@ def site_bar(
     """
 
     # init base render class
-    base = BarTemplate(console, has_center_column=True)
+    base = BarTemplate(console)
 
     # === Render ===
     base._render_sep('t')
-    printc(f'║{info.name:^{base.width}}║')
+
+    base.render_top_line([(info.name_str, None)])
+
     base._render_sep('m')
-    base.render_lines(
-                      [
-                       f'ID: Site-{info.id:03d}',
-                       f'Director: {info.director_str}',
-                       f'Location: {loc}'
-                      ],
-                      [None] * 3,
-                      [True] * 3,
-                     )
-    base._render_sep('b')
 
+    base.render_lines([
+                       (f'Director: {info.director_str}', None),
+                       (f'Location: {loc}', None)
+                     ])
 
-def mtf_bar(
-            info: PD.MTF,
-            console: Console | None = None
-           ) -> None:
-    """
-    Displays a bar for provided MTF info
-    Args:
-        info (ProcessedData.MTF): MTF info to display
-        console (Console | None): Console to print to
-    """
-
-    # init base render class
-    base = BarTemplate(console, has_center_column=True)
-
-    # === Render ===
-    base._render_sep('t')
-    printc(f'║{info.name_str:^{base.width}}║')
-    base._render_sep('m')
-    base.render_lines(
-                      [
-                       f'Assigned Site: {info.site}',
-                       f'Leader: {info.leader_str}',
-                       f'Active: {info.active}'
-                      ],
-                      [None] * 3,
-                      [True] * 3,
-                     )
     base._render_sep('b')
 
 
@@ -155,14 +146,15 @@ def user_bar(
 
     # === Render ===
     base._render_sep('t')
-    printc(f'║{info.name_str:^{base.width}}║')
+
+    base.render_top_line([(info.name_str, None)])
+
     base._render_sep('m')
-    base.render_lines(
-                      [
-                       f'Assigned Site: {info.site}',
-                       f'Clearance Level: {info.clearance}'
-                      ],
-                      [None] * 2,
-                      [True] * 2,
-                     )
+
+    base.render_lines([
+                       (f'Assigned Site: {info.site}', None),
+                       (f'Clearance Level: {info.clearance_str}',
+                        CLEAR_LVL_COLOURS[info.clearance_id])
+                     ])
+
     base._render_sep('b')
