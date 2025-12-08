@@ -1,8 +1,10 @@
 from rich.console import Console
 from typing import Literal
 
-from .lines import print_piped_line
-from ...config import SIZE, MIN_TERM_WIDTH
+from .lines import print_piped_line, print_centered_line, \
+                   format_centered_text as fc_text
+from ...config import MIN_TERM_WIDTH, LEFT_PADDING, \
+                      CONT_CLASS_COLOURS, ACS_TOP_BAR_WIDTH as ACS_WIDTH
 
 from ....sql.exceptions import FieldError
 
@@ -11,121 +13,236 @@ class BarTemplate:
     """
     Template for rendering user/site/SCP/MTF display bars
 
-    Args:
-        console (Console | None): Console to print to
-        has_center_column (bool): does the bar has a center column
-        width (int): Total width of the bar
-        is_acs (bool): is this the acs bar
+    Parameters
+    ----------
+    console : Console | None
+        Console to print to
+    has_center_column : bool
+        does the bar has a center column
+    width : int
+        Total width of the bar
+    triple_top : bool
+        whether or not to use the ACS/MTF top bar style
+        (3 columns on the top row)
+    double_sep_top : bool
+        alternate render for ACS/MTF top row separator
+        ** NOT IMPLEMENTED **
+
     """
 
     def __init__(self,
                  console: Console | None = None,
-                 has_center_column: bool = False,
+                 has_center_column: bool = False, # unused, but maybe useful again later
                  width: int = MIN_TERM_WIDTH,
-                 is_acs: bool = False
+                 triple_top: bool = False,
+                 double_sep_top: bool = False
                 ) -> None:
 
         # === Init basic self vars ===
-        self.is_acs = is_acs                                    # is this the acs bar
-        self.width = width                                      # total width of bar
-        self.console = console if console else Console()        # Console to print to
-        self.left_align = ' ' * ((SIZE - MIN_TERM_WIDTH) // 2)  # spaces to left align
-        self.cols = 3 if has_center_column else 2               # number of columns
+        self.triple_top = triple_top                           # whether or not to use the ACS/MTF top bar style
+        self.width = width                                     # total width of bar
+        self.console = console if console else Console()       # Console to print to
+        self.cols = 3 if has_center_column else 2              # number of columns
+        self.double_sep_top = False                            # alternate render for ACS/MTF top row separator
+        self.sides: list[Literal['l', 'r', 'c']] = ['l', 'r']  # sides for piped lines
+
+
+        if double_sep_top:
+            raise NotImplementedError(
+                'double_sep_top ACS/MTF bar not yet implemented'
+            )
+
+        if triple_top and has_center_column:
+            raise ValueError(
+                             'ACS & MTF bars must not have center columns'
+                            )
+
 
 
         # === Handle length calculation ===
-        col_len = (width - 2) // self.cols
+        col_len = (width - self.cols) // self.cols
 
-        if (col_len * self.cols) + 2 != width:
+        # validation
+        if (col_len * self.cols) + self.cols != width:
             raise FieldError(
                              'width', width,
-                             f'a multiple of {self.cols} plus 2'
+                             f'a multiple of {self.cols} plus {self.cols}'
                             )
 
         self.length = col_len
         rept = '═' * col_len
 
+        
 
         # === Handle column stuff ===
-        if has_center_column:
-            self.sides = ['l', 'c', 'r']
+
+        if triple_top: # ACS & MTF bars
+            l_r    = '═' * ACS_WIDTH[0]              # left & right seps
+            center = '═' * ((ACS_WIDTH[1] - 2) // 2) # account for pipes
+
+            if self.double_sep_top:
+                self.sep = {
+                            't':  f'╔{l_r}╗╔═{2 * center}═╗╔{l_r}╗',
+                            'lt': f'╠{l_r}╝╚{center}╗╔{center}╝╚{l_r}╣',
+                            'm':  f'╠{rept}╣╠{rept}╣',
+                            'b':  f'╚{rept}╝╚{rept}╝'
+                           }
+
+            else:
+                self.sep = {
+                            't':  f'╔{l_r}╦═{2 * center}═╦{l_r}╗',
+                            'lt': f'╠{l_r}╩{center}╗╔{center}╩{l_r}╣',
+                            'm':  f'╠{rept}╣╠{rept}╣',
+                            'b':  f'╚{rept}╝╚{rept}╝'
+                           }
+
+        else: # Site & User bars
             self.sep = {
-                        't':f'╔{rept}╦{rept}╦{rept}╗',
-                        'm':f'╠{rept}╬{rept}╬{rept}╣',
-                        'b':f'╚{rept}╩{rept}╩{rept}╝'
+                        't': f'╔{rept}══{rept}╗',
+                        'm': f'╠{rept}╗╔{rept}╣',
+                        'b': f'╚{rept}╝╚{rept}╝'
                        }
 
-            if not is_acs: # ACS is slightly different
-                self.sep['t']  = f'╔{rept}═{rept}═{rept}╗'
-                self.sep['m'] = f'╠{rept}╦{rept}╦{rept}╣'
-        else:
-            self.sides = ['l', 'r']
-            self.sep = {
-                        't':f'╔{rept}╗╔{rept}╗',
-                        'm':f'╠{rept}╣╠{rept}╣',
-                        'b':f'╚{rept}╝╚{rept}╝'
-                       }
 
-            if not is_acs: # ACS is slightly different
-                self.sep['t']  = f'╔{rept}══{rept}╗'
-                self.sep['m'] = f'╠{rept}╗╔{rept}╣'
-
-
-        # type annotate self.sides
-        self.sides: list[Literal['l', 'r', 'c']]
+        # type annotations
+        self.cols: Literal[2, 3]
 
 
     # === Helper Method ===
+
     def _render_sep(self,
-                    pos: Literal['t', 'm', 'b']
+                    pos: Literal['t', 'lt', 'm', 'b']
                    ) -> None:
         """
         Renders a separator line
 
         Args:
-            pos ('t', 'm', 'b'): Position of separator
+            pos ('t', 'lt', 'm', 'b'): Position of separator
         """
         try:
-            self.console.print(f'{self.left_align}{self.sep[pos]}')
+            self.console.print(f'{LEFT_PADDING}{self.sep[pos]}')
         except KeyError:
-            raise FieldError('pos', pos, "'t', 'm', or 'b'")
+            raise FieldError('pos', pos, "'t', 'lt', 'm', or 'b'")
 
-
-    # === Main Method ===
-    def render_lines(self,
-                    texts: list[str],
-                    hex_colours: list[str | None],
-                    default_colourings: list[bool],
-                   ) -> None:
+    def _gen_classification_args(self,
+                                 classification_name: str,
+                                 classification_str: str
+                                 ) -> tuple[str, str]:
         """
-        Renders lines with provided texts and colourings
-        using print_piped_line from ./lines.py
+        Generates arguments for classification display lines
 
-        Args:
-            texts (list[str]): Texts to display
-            hex_colours (list[str | None]): Hex colours for each text
-            default_colourings (list[bool]): Whether to use default colouring for each text
+        Parameters
+        ----------
+        classification_name : str
+            Name of the classification
+        classification_str : str
+            Classification string
+
+        Returns
+        -------
+        tuple[str, str]
+            Arguments for classification display lines
+
+        Example
+        -------
+        >>> _gen_classification_args('Containment', 'Euclid')
+        ('Containment Class: Euclid', CONT_CLASS_COLOURS['Euclid'])
         """
+        return (f'{classification_name} Class: {classification_str}',
+                CONT_CLASS_COLOURS[classification_str])
 
-        # === Input Validation ===
-        if len(texts) % self.cols != 0:
+    # === Main Methods ===
+
+    def render_top_line(self,
+                        text_styles: list[tuple[str, str | None]]
+                       ) -> None:
+        """
+        Renders the top line for bars
+
+        Parameters
+        ----------
+        text_styles: list[tuple[str, str | None]]
+            Texts and their styles for the columns of the top bar (left, center, right)
+
+        Raises
+        ------
+        ValueError
+            - If `len(text_styles)` is not 3 when `triple_top` is True
+            - If `len(text_styles)` is not 1 when `triple_top` is False
+            - If any tuple in `text_styles` does not have length 2
+        """
+        t_s = text_styles
+        expected_len = 3 if self.triple_top else 1
+
+        # Validation
+        if len(t_s) != expected_len:
             raise FieldError(
-                             'texts', texts,
-                             f'a multiple of {self.cols}'
+                            'text_styles', t_s,
+                            f'{expected_len} tuples, got {len(t_s)}'
                             )
 
-        if not len(texts) == len(hex_colours) == len(default_colourings):
-            raise ValueError('All argument lists must be of equal length')
+        if not all(len(t) == 2 for t in t_s):
+            raise FieldError(
+                            'text_styles', t_s,
+                            f'All tuples must have length 2'
+                            )
 
 
         # === Render ===
-        for i in range(len(texts)):
+
+        if not self.triple_top:
+            self.console.print(
+                LEFT_PADDING, "║",
+                *fc_text(t_s[0][0], 'c', t_s[0][1], self.width),
+                sep=''
+            )
+
+        else:
+            self.console.print(
+                LEFT_PADDING, '║',
+
+                *fc_text(t_s[0][0], 'l', t_s[0][1], ACS_WIDTH[0]),
+                *fc_text(t_s[1][0], 'c', t_s[1][1], ACS_WIDTH[1]),
+                *fc_text(t_s[2][0], 'r', t_s[2][1], ACS_WIDTH[2]),
+
+                sep=''
+            )
+
+
+    def render_lines(self,
+                    text_styles: list[tuple[str, str | None]],
+                   ) -> None:
+        """
+        Renders lines with provided texts and stylings
+        using print_piped_line from ./lines.py
+
+        Parameters
+        ----------
+        text_styles : list[tuple[str, str | None]]
+            Texts to render and their styles
+        """
+
+        # === Input Validation ===
+        if len(text_styles) % self.cols != 0:
+            raise FieldError(
+                             'text_styles', text_styles,
+                             f'a multiple of {self.cols}'
+                            )
+
+        if not all(len(t) == 2 for t in text_styles):
+            raise FieldError(
+                            'text_styles', text_styles,
+                            f'All tuples must have length 2'
+                            )
+
+
+        # === Render ===
+        for i in range(len(text_styles)):
             print_piped_line(
                              console=self.console,
-                             string=texts[i],
+                             string=text_styles[i][0],
                              side=self.sides[i % len(self.sides)],
-                             hex_colour=hex_colours[i],
-                             width=self.length,
-                             default_colouring=default_colourings[i],
+                             style=text_styles[i][1],
+                             content_width=self.length,
                              cols=self.cols,
                             )
