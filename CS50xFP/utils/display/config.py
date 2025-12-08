@@ -54,8 +54,8 @@ MIN_TERM_WIDTH = 120
 BAR_WIDTH = 58
 """Width of text areas used in user/site/SCP/MTF display"""
 
-ACS_TOP_BAR_WIDTH = 32
-"""Width of left/right text areas of the ACS top bar"""
+ACS_TOP_BAR_WIDTH = [32, 54, 32]
+"""Width of text areas of the top bar for ACS & MTF (left, center, right)"""
 
 BOX_SIZE = 35 # fits most messages nicely
 """Default box size for boxed messages"""
@@ -65,7 +65,6 @@ SIZE = _get_term_width()
 
 LEFT_PADDING = ' ' * ((SIZE - MIN_TERM_WIDTH) // 2)
 """Spaces to center 120 char content in terminal"""
-
 
 
 # === Colour Configurations ===
@@ -87,8 +86,8 @@ index is level
 """
 
 
-OTHER_CONT_CLASS = 'dim'  # grey for all containment classes
-"""Hex colour code used for containment classes not in CONT_CLASS_COLOURS"""
+OTHER_CONT_CLASS = 'dim italic'  # grey for all containment classes
+"""rich style used for containment classes not in CONT_CLASS_COLOURS"""
 
 CONT_CLASS_COLOURS = defaultdict(
     lambda: OTHER_CONT_CLASS,
@@ -99,14 +98,29 @@ CONT_CLASS_COLOURS = defaultdict(
     }
 )
 """
-Hex colour codes used in containment class & secondary class rendering
-
-ALWAYS USE `.get()` TO ACCESS THIS DICT
+Styles used in containment class & secondary class rendering
 
 keys are containment classes
-(eg, CONT_CLASS_COLOURS.get('Safe') is used for Safe class)
+(eg, CONT_CLASS_COLOURS['Safe'] is used for Safe class)
 """
 
+
+# === Other Constants ===
+PLACEHOLDER = '\x00\x00'
+"""Placeholder string for escaped colons in text formatting"""
+
+SPECIAL_TEXTS = ['[DATA EXPUNGED]', 'None', 'Inactive']
+"""Texts styled with OTHER_CONT_CLASS"""
+
+ACTIVE_TEXT = 'Active'
+"""Text styled in green"""
+
+# === Regex Patterns ===
+DIGIT_REGEX = r'(?<!O)5|[0-46-9]'
+"""Regex pattern matching digits, excluding O5"""
+
+QUOTED_REGEX = r'"[^"]*"'
+"""Regex pattern matching text in double quotes"""
 
 # what's importable
 __all__ = [
