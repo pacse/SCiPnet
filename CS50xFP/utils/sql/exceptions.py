@@ -84,3 +84,14 @@ def FieldError(field: str,
     """
     return ValueError((f'Invalid {field}: {field_val!r}'
                        f' (expected {expected})'))
+
+def ArgumentError(arg_val: Any,
+                  expected_type_name: str,
+                  arg_name: str = 'info',
+                 ) -> TypeError:
+    """
+    A formatted TypeError:
+    `Invalid {arg_name} type: {type(arg_val)} (expected {expected_type_name})`
+    """
+    return TypeError((f'Invalid {arg_name} type: {type(arg_val)}'
+                       f' (expected {expected_type_name})'))
