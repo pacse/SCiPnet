@@ -58,614 +58,331 @@ NOTE:
   - usr_clearance: you get it
 
 
+# Display Module TODO List
 
-### Database Schema Review (deepwell_plan.sql)
+## helpers.py - TODOs
 
-The schema shows good foundational design with proper relationships, but has some areas for improvement:
+### High Priority
+- [ ] **Add input validation to `printc()`**
+  - Validate [`string`]helpers.py ) is actually a string
+  - Handle empty strings gracefully
 
-**Areas for Enhancement:**
+- [ ] **Add docstring parameters documentation**
+  - Document [`end`]helpers.py ) and [`flush`]helpers.py ) parameters in [`printc()`]helpers.py )
+  - Add parameter types to all docstrings
 
-2. **Audit Trail Enhancement:**
-```sql
-CREATE TABLE audit_log (
-    action TEXT NOT NULL,
-    details TEXT
-)
-```
-Consider:
-- Making `details` structured (JSON/specific columns) instead of free text
+### Medium Priority
+- [ ] **Add error handling to `clear()`**
+  - Wrap [`system()`](/c:/Users/packa/AppData/Local/Programs/Python/Python313/Lib/os.py ) calls in try-except
+  - Handle cases where shell commands fail
 
-3. **Status Management:**
-```sql
-status TEXT DEFAULT "active" CHECK(status IN ("active", "neutralized", "explained", "deleted"))
-```
-Good use of CHECK constraint, but consider:
-- Adding status change timestamp
-- Recording who changed status and why
+- [ ] **Consider timezone awareness in `timestamp()`**
+  - Add optional timezone parameter
+  - Document that current implementation uses local time
 
-### Overall Architecture Review
+### Low Priority
+- [ ] **Add `__all__` export control**
+  - Explicitly define what functions are public API
 
-The project has a clear client-server architecture with good separation of concerns:
+---
 
-```
-CS50xFP/
-├── client.py          # Client entry point
-├── server.py          # Server entry point
-├── utils/
-│   ├── art.py        # UI rendering
-│   ├── basic.py      # Core utilities
-│   ├── client.py     # Client logic
-│   ├── server.py     # Server logic
-│   ├── socket.py     # Network handling
-│   └── sql.py        # Database interface
-└── deepwell/         # Data storage
-```
+## config.py - TODOs
 
-**Recommendations:**
+### High Priority
+- [ ] **Fix `MAX_BOX_SIZE` validation**
+  - Currently defined but never enforced
+  - Add validation in [`basic_box()`](CS50xFP/utils/display/core/boxes.py ) that uses this constant
 
-1. **Security Layer:**
-Add a dedicated security module for:
-- Credential validation
-- Session management
-- Access control enforcement
+### Medium Priority
+- [ ] **Document why `MIN_TERM_WIDTH = 120`**
+  - Add comment explaining this specific width requirement
+  - Consider if this could be configurable
 
-2. **Configuration Management:**
-Add a config system for:
-- Server settings
-- Security parameters
+- [ ] **Add validation for color codes**
+  - Validate hex codes in [`CLEAR_LVL_COLOURS`]config.py ) are valid
+  - Consider using a color validation function
 
-3. **Error Handling:**
-Add a dedicated error module for:
-- Error logging
-- User-friendly error messages
+### Low Priority
+- [ ] **Consider environment variable overrides**
+  - Allow [`MIN_TERM_WIDTH`]config.py ) to be set via environment variable
+  - Useful for testing or special deployments
 
-### SQL.py Review
+---
 
-#### General Structure
-- Good use of dataclasses for data organization
-- Clear separation of database operations
-- Strong typing with type hints
-- Custom exception handling
+## system.py - TODOs
 
-#### Areas for Improvement
+### High Priority
+- [ ] **Extract magic numbers from `sim_load()`**
+  ```python
+  sleep(expovariate(2))  # What does 2 represent?
+  if choice([True, False, False, False]):  # 25% chance
+  ```
+  - Create constants: [`LOAD_RATE = 2`]system.py ), [`HICCUP_PROBABILITY = 0.25`]system.py )
 
+- [ ] **Fix code duplication in `login()`**
+  - Three very similar blocks for O5/Director/Administrator
+  - Extract common pattern into helper function
 
-3. **Error Handling Enhancement**
+### Medium Priority
+- [ ] **Add user validation in `login()`**
+  - Validate [`usr`]system.py ) is not None
+  - Validate required fields exist
+
+- [ ] **Make ASCII art configurable**
+  - Consider loading from external file
+  - Allows customization without code changes
+
+### Low Priority
+- [ ] **Consider async for `sim_load()`**
+  - Current blocking could be improved with async/await
+  - Low priority since it's intentionally blocking for effect
+
+---
+
+## access.py - TODOs
+
+### High Priority
+- [ ] **Standardize parameter naming**
+  ```python
+  def redacted(file: str, file_classification: str, usr_clearance: str)
+  def expunged(file: str)
+  def granted(file: str)
+  ```
+  - [`file`]access.py ) should be [`file_ref`]access.py ) for consistency with displayed text
+  - Or rename displayed text to match parameter
+
+- [ ] **Add input validation**
+  - Validate all parameters are strings and non-empty
+  - Add type checking
+
+### Medium Priority
+- [ ] **Add comprehensive docstrings**
+  - Document all parameters
+  - Add examples of usage
+  - Document the RAISA logging behavior
+
+### Low Priority
+- [ ] **Consider extracting message templates**
+  - Move fixed strings to configuration
+  - Allows localization in future
+
+---
+
+## create.py - TODOs
+
+### High Priority
+- [ ] **Missing import: `f_id` function**
+  ```python
+  from .helpers import f_id as format_id
+  ```
+  - This function doesn't exist in helpers.py!
+  - Either create it or use inline formatting
+
+- [ ] **Add input validation to all functions**
+  - Validate string parameters are non-empty
+  - Validate [`f_id`]create.py ) is positive integer
+
+### Medium Priority
+- [ ] **Extract repeated constants**
+  ```python
+  PERSISTS = 'CONTACT YOUR SITE...'
+  TRY_AGAIN = [...]
+  ```
+  - Good start, but more can be extracted
+  - Consider moving to configuration
+
+- [ ] **Standardize function naming**
+  - [`create_f`]create.py ), [`invalid_f_type`]create.py ), [`invalid_f_data`]create.py ), [`created_f`]create.py )
+  - Use full word "file" for consistency
+
+### Low Priority
+- [ ] **Add comprehensive docstrings**
+  - Document parameters and their formats
+  - Add usage examples
+
+---
+
+## art.py - TODOs ⚠️ **Needs Major Refactoring**
+
+### Critical Priority
+- [ ] **Missing imports - Code won't run!**
+  ```python
+  from .helpers import *  # What's imported?
+  ```
+  - [`COLOURS`]art.py ) is undefined (should be [`CLEAR_LVL_COLOURS`]config.py ))
+  - Functions like [`acs_bar()`](CS50xFP/utils/display/core/bars/bars.py ), [`site_bar()`](CS50xFP/utils/display/core/bars/bars.py ), [`mtf_bar()`](CS50xFP/utils/display/core/bars/bars.py ), [`user_bar()`](CS50xFP/utils/display/core/bars/bars.py ) not imported
+  - [`print_table_users()`](CS50xFP/utils/display/core/tables.py ) not imported
+  - Fix all imports explicitly
+
+### High Priority
+- [ ] **Code duplication in interactive loops**
+  ```python
+  # display_scp, display_site, display_mtf all have similar patterns
+  while True:
+      print()
+      if keys:
+          for i, key in enumerate(keys):
+              print(f'{i}: {key}')
+      print('C: close file')
+      # ... handling logic
+  ```
+  - Extract to `_display_additional_files()` helper function
+
+- [ ] **Inconsistent error handling**
+  ```python
+  except ValueError or IndexError:  # Wrong! This is always True
+  ```
+  - Should be: `except (ValueError, IndexError):`
+  - Fix in both [`display_scp()`]art.py ) and [`display_site()`]art.py )
+
+- [ ] **Add input validation**
+  - Validate all [`Models.*`](CS50xFP/utils/sql/models.py ) parameters are not None
+  - Validate required fields exist
+  - Handle missing relationships gracefully
+
+### Medium Priority
+- [ ] **Simplify `display_scp()` addenda handling**
+  ```python
+  if addenda:
+      a_names: list[str] = [key for key in addenda.keys()]
+  else:
+      a_names = []
+  ```
+  - Simplify: `a_names = list(addenda.keys()) if addenda else []`
+
+- [ ] **Remove unnecessary variable decrement**
+  ```python
+  i -= 1  # After removing from a_names
+  ```
+  - This does nothing useful, remove it
+
+- [ ] **Add comprehensive docstrings**
+  - Document all parameters
+  - Explain the interactive loop behavior
+  - Document keyboard commands
+
+### Low Priority
+- [ ] **Consider extracting keyboard commands to config**
+  ```python
+  print('C: close file')
+  if inp.upper() == 'C':
+  ```
+  - Make commands configurable
+  - Add help command listing all options
+
+---
+
+## Critical Issues Summary 🚨
+
+### **Must Fix Before Running:**
+
+1. **art.py import errors** - Code will crash immediately
+   - Import [`CLEAR_LVL_COLOURS`]config.py ) as COLOURS
+   - Import all bar functions from [`core.bars`](CS50xFP/utils/display/core/bars/bars.py )
+   - Import [`print_table_users`](CS50xFP/utils/display/core/tables.py ) from [`core.tables`](CS50xFP/utils/display/core/tables.py )
+
+2. **create.py missing function** - [`format_id`]create.py ) doesn't exist
+   - Either create it in helpers.py or use inline: `f'{f_id:03d}'`
+
+3. **Exception handling bug** - Will catch wrong exceptions
+   - Fix: `except (ValueError, IndexError):` not `except ValueError or IndexError:`
+
+---
+
+## Refactoring Recommendations
+
+### Extract Common Interactive Pattern
 ```python
-def get_name(table: str, table_id: int) -> str:
-    try:
-        # ...
-    except (IndexError, KeyError) as e:
-        raise DatabaseError(f"Failed to retrieve name...")
-```
-- Include more context in error messages (e.g., SQL query that failed)
-- Consider logging database errors
+# New helper in helpers.py or art.py
+def display_additional_content(
+    items: dict[str, str],
+    console: Console,
+    prompt: str = 'Display additional files?'
+) -> None:
+    """Generic handler for showing additional content with interactive menu"""
+    available_keys = list(items.keys())
 
-5. **Audit Logging**
+    while available_keys:
+        print()
+        print(prompt)
+
+        for i, key in enumerate(available_keys):
+            print(f'{i}: {unquote(key)}')
+        print('C: close')
+
+        choice = input('> ')
+
+        if choice.upper() == 'C':
+            return
+
+        try:
+            idx = int(choice)
+            key = available_keys[idx]
+            console.print(Md(f'## {unquote(key)}\n\n{items[key]}'))
+            available_keys.remove(key)
+        except (ValueError, IndexError):
+            print(f'INVALID CHOICE: {choice!r}')
+```
+
+### Simplify `login()` Function
 ```python
-def log_event(user_id: int, action: str, details: str = "") -> None:
-```
-- Consider adding severity levels
-- Add transaction status
-
-7. **Documentation**
-- Add more detailed docstrings (parameters, return types, exceptions)
-- Include usage examples in docstrings
-- Document security considerations
-- Add module-level documentation
-
-8. **Code Organization**
-- Consider splitting into smaller modules:
-  - `db_connection.py` for connection management
-  - `models.py` for dataclasses
-  - `queries.py` for SQL operations
-  - `audit.py` for logging functions
-
-9. **Testing Considerations**
-- Add type checking decorators where critical
-- Make functions more testable (pure functions where possible)
-- Consider adding query result caching for performance
-
-10. **Minor Improvements**
-- Use enum for status values
-- Add connection timeout handling
-- Consider implementing connection retry logic
-- Add database migration support
-
-### Critical Security & Stability Issues
-
-1. **Database Connection Management**
-```python
-try:
-    db = SQL(f"sqlite:///{DB_PATH}")
-except RuntimeError:
-    raise DatabaseNotFoundError()
-```
-- Should implement connection retry logic
-- Consider adding connection timeout
-
-### Structural Improvements
-
-1. **Class Organization**
-```python
-class User(BaseModel):
-    # ...existing code...
-```
-- Add model validation methods
-- Consider adding model serialization methods
-
-2. **Configuration Management**
-```python
-VALID_TABLES = [
-    "users",
-    "scps",
-    # ...existing code...
-]
-```
-- Move to configuration file
-- Add environment-specific settings
-- Create configuration class
-- Add configuration validation
-
-### Error Handling Enhancement
-
-1. **Custom Exceptions**
-- Add specific exceptions for:
-````python
-# ...existing code...
-class ConnectionPoolExhaustedError(DatabaseError): ...
-class QueryTimeoutError(DatabaseError): ...
-class ValidationError(DatabaseError): ...
-````
-
-2. **Error Context**
-```python
-def get_field_with_field(table_name: str, ...):
-```
-- Add error context information
-- Implement error logging
-- Add transaction rollback handling
-- Consider adding retry mechanisms
-
-### Performance Optimization
-
-1. **Query Optimization**
-- Add result caching mechanism
-- Implement connection pooling
-- Add query timeout handling
-- Consider bulk operations support
-
-2. **Model Initialization**
-```python
-def init_usr(info: dict[str, str | int | None]) -> User:
-    # Currently marked as TODO
-```
-- Implement lazy loading for related data
-- Add result caching
-- Implement batch initialization
-- Add validation caching
-
-### Documentation Needs
-
-1. **Function Documentation**
-```python
-def get_cc_colour(id: int) -> int:
-    '''
-    Gets a containment class's colour (for art.py)
-    '''
-```
-- Add parameter validation info
-- Document exceptions raised
-- Add usage examples
-- Include performance considerations
-
-2. **Type Hints**
-```python
-def log_event(user_id: int, action: str, ...) -> None:
-```
-- Add more specific type hints
-- Create custom types for validated inputs
-- Add runtime type checking
-- Document type constraints
-
-### Code Quality Improvements
-
-1. **Constants Management**
-```python
-def get_cc_colour(id: int) -> int:
-    if id == 1:
-        colours = (0,159,107) # Green
-    # ...existing code...
-```
-- Move color definitions to configuration
-- Create enum classes for status codes
-- Add constant validation
-- Implement constant documentation
-
-2. **Validation Logic**
-```python
-def validate_table(table: str) -> bool:
-```
-- Add input parameter validation
-- Create validation decorators
-- Implement validation caching
-- Add validation error messages
-
-### Testing Considerations
-
-1. **Testability**
-- Add test fixtures
-- Create mock database connections
-- Add integration test support
-- Implement performance benchmarks
-
-2. **Monitoring**
-- Add performance metrics
-- Implement query logging
-- Add connection monitoring
-- Create health check endpoints
-
-Would you like me to elaborate on any of these points or focus on specific improvements?
-
-pacse: Yes, can we start from the beginning? Could elaborate and focus on how to handle database connections? Right now db is the one var used across everything. (REMEMBER, NO CODE GENERATION, just detailed suggestions and arrows in the right direction [this library, these tools]. the most coding you can do, is something similar to what you'd reccomend for my project in a different context) If you suggest a new tool, please explain it.
-
-GitHub Copilot: Let's focus on improving database connection management. Here's a detailed analysis and recommendations:
-
-### Current Database Connection Issues
-```python
-try:
-    db = SQL(f"sqlite:///{DB_PATH}")
-except RuntimeError:
-    raise DatabaseNotFoundError()
-```
-
-#### Problems with Current Approach:
-1. Single global connection
-2. No connection pooling
-3. No connection lifecycle management
-4. No context management
-5. Potential thread safety issues
-
-### Recommended Solutions
-
-#### 1. Connection Pooling
-Consider using **SQLAlchemy** with connection pooling:
-- Manages multiple connections
-- Handles thread safety
-- Provides connection lifecycle management
-- Example package: `sqlalchemy`
-
-Key concepts to research:
-- Connection pools
-- Engine configuration
-- Session management
-
-#### 2. Context Management
-Create a connection context manager:
-- Safely acquires/releases connections
-- Handles cleanup
-- Manages transactions
-- Research Python's `contextlib` and `__enter__`/`__exit__`
-
-#### 3. Configuration Management
-Move database configuration to a separate file:
-- Connection strings
-- Pool settings
-- Timeouts
-- Consider using `python-dotenv` for environment variables
-
-#### 4. Connection Health Monitoring
-Add connection health checks:
-- Ping database
-- Connection timeouts
-- Auto-reconnection
-- Dead connection detection
-
-### Suggested Structure
-
-1. Create new files:
-```plaintext
-utils/sql/
-├── config.py        # Database configuration
-├── connection.py    # Connection management
-├── exceptions.py    # Database exceptions
-└── models.py        # Data models
-```
-
-2. Key Components to Implement:
-- Database configuration class
-- Connection pool manager
-- Connection context manager
-- Health check system
-
-### Useful Tools & Libraries
-
-1. **SQLAlchemy**
-- Full-featured SQL toolkit
-- Connection pooling built-in
-- ORM capabilities
-
-2. **python-dotenv**
-- Environment variable management
-- Configuration security
-
-3. **contextlib**
-- Context manager utilities
-- Resource management
-
-4. **asyncio**
-- Async database operations
-- Connection management
-
-### Migration Strategy
-
-1. Create new connection management system
-2. Gradually migrate existing code
-3. Add proper error handling
-4. Implement connection pooling
-5. Add monitoring
-
-Would you like me to elaborate on any of these aspects or move on to another topic?
-
-pacse: With these problems: Single global connection, No connection pooling, No connection lifecycle management, No context management, Potential thread safety issues can you work through each one explain how I could address them with sqlalchemy? How do I use this libary, to what extent should I use it's tools, and how should I integrate it with my current project?
-
-GitHub Copilot: Let's break down how to integrate SQLAlchemy to solve each issue:
-
-### 1. Setting Up SQLAlchemy
-
-First, you'll need to install SQLAlchemy:
-```bash
-pip install sqlalchemy
-```
-
-### 2. Connection Management Structure
-
-Create a new file structure:
-````python
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy.pool import QueuePool
-
-# ...configuration imports...
-````
-
-### 3. Addressing Each Problem
-
-#### A. Single Global Connection Problem
-Currently:
-```python
-# Current problematic global connection
-db = SQL(f"sqlite:///{DB_PATH}")
-```
-
-Solution structure:
-1. Create an engine factory
-2. Implement session management
-3. Use connection pooling
-4. Add context managers
-
-Here's how to structure the solution (not implementation):
-
-#### B. Connection Pooling
-```python
-"""
-Database configuration settings
-"""
-DB_CONFIG = {
-    'pool_size': 5,
-    'max_overflow': 10,
-    'pool_timeout': 30,
-    'pool_recycle': 3600,
-}
-```
-
-#### C. Connection Lifecycle Management
-Structure your connection management into three layers:
-1. Engine (lowest level)
-2. Session Factory (middle level)
-3. Session Context Manager (highest level)
-
-#### D. Context Management
-Create a session context manager pattern. Research:
-- `contextlib.contextmanager`
-- SQLAlchemy's `Session` management
-- Transaction handling
-
-#### E. Thread Safety
-Use SQLAlchemy's built-in thread-safe features:
-- Scoped sessions
-- Connection pooling
-- Thread-local storage
-
-### 4. Integration Strategy
-
-1. **Step-by-Step Migration**:
-   - Keep CS50's SQL initially
-   - Create new SQLAlchemy infrastructure
-   - Gradually migrate functions
-   - Test thoroughly
-
-2. **New Features to Add**:
-   - Session management
-   - Connection pooling
-   - Error handling
-   - Migration tools
-
-3. **Code Organization**:
-```plaintext
-utils/sql/
-├── __init__.py
-├── connection.py    # SQLAlchemy setup
-├── config.py       # Database config
-├── models.py       # SQLAlchemy models
-└── operations.py   # Database operations
-```
-
-### 5. Key SQLAlchemy Concepts to Research
-
-1. **Engine Configuration**:
-   - `create_engine()`
-   - Pool settings
-   - Engine events
-
-2. **Session Management**:
-   - `sessionmaker`
-   - `scoped_session`
-   - Session contexts
-
-3. **Model Definition**:
-   - Declarative base
-   - Column types
-   - Relationships
-
-Would you like me to elaborate on any of these aspects or focus on a specific implementation strategy?
-
-pacse: Yes, could you expand on how I could structure SQLAlchemy setup and database config? I'm pretty unfamilar with sql usage in python outside of CS50.
-
-GitHub Copilot: I'll help you structure the SQLAlchemy setup and configuration. Let's start with creating the necessary files and explaining their purpose.
-
-First, create these new files in your project:
-
-````python
-"""
-Database configuration settings for SCiPNET
-Controls database connection parameters and pooling settings
-"""
-
-from pathlib import Path
-
-# Database location
-DB_PATH = (Path(__file__).parent.parent.parent / "deepwell" / "SCiPnet.db").resolve()
-DB_URL = f"sqlite:///{DB_PATH}"
-
-# Connection pool settings
-POOL_CONFIG = {
-    'pool_size': 5,          # Number of permanent connections
-    'max_overflow': 10,      # Maximum number of additional connections
-    'pool_timeout': 30,      # Seconds to wait for available connection
-    'pool_recycle': 3600,    # Refresh connections older than 1 hour
+# Create a data structure for login messages
+LOGIN_MESSAGES = {
+    'O5 Council Member': {
+        'title': '<< O5 AUTHORIZATION VERIFIED >>',
+        'clearance': 'CLEARANCE LEVEL: 6 - COSMIC TOP SECRET',
+        'welcome': 'Welcome back, {name}.',
+        'logging': 'This session is being logged by CoreNode Zero.',
+        'status': 'SYSTEM STATUS: OPERATIONAL | DEEPWELL CHANNEL ENCRYPTED'
+    },
+    # ... similar for other titles
 }
 
-# SQLite specific settings
-SQLITE_CONFIG = {
-    'isolation_level': 'SERIALIZABLE',  # Strongest isolation level
-    'echo': False,                      # Set to True for SQL query logging
-    'connect_args': {
-        'timeout': 15,                  # Connection timeout in seconds
-        'check_same_thread': False,     # Required for multi-threading
-    }
-}
-````
+def _format_login_line(text: str, width: int = 112) -> str:
+    """Helper to format login message lines"""
+    return '////' + f'{text:^{width}}' + '////'
 
-Next, create the connection management file:
+def login(usr: Models.User) -> None:
+    messages = LOGIN_MESSAGES.get(usr.title.name)
 
-````python
-"""
-Database connection management for SCiPNET
-Handles SQLAlchemy engine and session creation
-"""
+    if messages:
+        # Build formatted message from template
+        # ... much cleaner implementation
+    else:
+        # Default simple message
+```
 
-from contextlib import contextmanager
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy.pool import QueuePool
+---
 
-from .config import DB_URL, POOL_CONFIG, SQLITE_CONFIG
-from .exceptions import DatabaseConnectionError
+## Priority Order - Overall
 
-# Create engine with configuration
-def create_db_engine():
-    """
-    Creates SQLAlchemy engine with configured pooling and SQLite settings
-    """
-    try:
-        engine = create_engine(
-            DB_URL,
-            poolclass=QueuePool,
-            **POOL_CONFIG,
-            **SQLITE_CONFIG
-        )
-        return engine
-    except Exception as e:
-        raise DatabaseConnectionError(f"Failed to create database engine: {str(e)}")
+### 🔴 **Critical (Fix Immediately)**
+1. Fix imports in art.py
+2. Fix/create [`format_id()`]create.py ) in create.py
+3. Fix exception handling syntax in art.py
 
-# Create session factory
-engine = create_db_engine()
-SessionFactory = sessionmaker(bind=engine)
-Session = scoped_session(SessionFactory)
+### 🟡 **High Priority (Before Production)**
+4. Add input validation across all display functions
+5. Extract common interactive loop pattern
+6. Refactor [`login()`]system.py ) to eliminate duplication
+7. Fix magic numbers in [`sim_load()`]system.py )
 
-@contextmanager
-def db_session():
-    """
-    Context manager for database sessions
-    Handles session lifecycle and cleanup
+### 🟢 **Medium Priority (Quality Improvements)**
+8. Add comprehensive docstrings
+9. Standardize naming conventions
+10. Extract more constants to configuration
+11. Add error handling to [`clear()`]helpers.py )
 
-    Usage:
-        with db_session() as session:
-            result = session.query(User).filter_by(id=1).first()
-    """
-    session = Session()
-    try:
-        yield session
-        session.commit()
-    except Exception as e:
-        session.rollback()
-        raise
-    finally:
-        session.close()
-````
+### 🔵 **Low Priority (Future Enhancements)**
+12. Consider async for loading animations
+13. Add localization support
+14. Make ASCII art configurable
 
-And update your exceptions file:
+---
 
-````python
-"""
-Database related exceptions for SCiPNET
-"""
+## Estimated Impact
 
-class DatabaseError(Exception):
-    """Base exception for database errors"""
-    pass
-
-class DatabaseConnectionError(DatabaseError):
-    """Raised when database connection fails"""
-    pass
-
-class DatabaseSessionError(DatabaseError):
-    """Raised when session operations fail"""
-    pass
-
-# ...existing code...
-````
-
-### Key Concepts Explained:
-
-1. **Configuration (`config.py`)**:
-   - Separates all database settings into one place
-   - Makes it easy to modify connection parameters
-   - Keeps sensitive data separate from code
-
-2. **Connection Management (`connection.py`)**:
-   - Creates a connection pool
-   - Manages session lifecycle
-   - Provides context manager for safe session usage
-   - Handles cleanup and error cases
-
-3. **Usage Example**:
-When you need to interact with the database, you'll use it like this:
-
-````python
-# Example usage in your other files
-from utils.sql.connection import db_session
-from utils.sql.models import User  # You'll create this next
-
-def get_user(user_id: int):
-    with db_session() as session:
-        return session.query(User).filter_by(id=user_id).first()
-````
-
-### Next Steps:
-
-1. Create your SQLAlchemy models (I can help with this next)
-2. Migrate your existing queries to use SQLAlchemy
-3. Add proper error handling
-4. Implement connection retrying
+- **Critical fixes**: ~30 minutes, code won't run without these
+- **High priority**: ~2-3 hours, significantly improves code quality
+- **Medium priority**: ~2-4 hours, professional polish
+- **Low priority**: Future work, nice-to-have features
