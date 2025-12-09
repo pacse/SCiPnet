@@ -2,13 +2,8 @@ from urllib.parse import unquote
 
 from rich.markdown import Markdown as Md
 from rich.console import Console
-from rich.text import Text
 
 from ..sql.models import Models
-
-# for typedefing
-from typing import Literal
-
 from .helpers import *
 
 
