@@ -1,10 +1,13 @@
+"""
+BarTemplate: Template for user/site/SCP/MTF display bars
+"""
+
 from rich.console import Console
 from typing import Literal
 
-from .lines import print_piped_line, print_centered_line, \
-                   format_centered_text as fc_text
-from ...config import MIN_TERM_WIDTH, LEFT_PADDING, \
-                      CONT_CLASS_COLOURS, ACS_TOP_BAR_WIDTH as ACS_WIDTH
+from .lines import print_piped_line, format_centered_text as fc_text
+from ...config import MIN_TERM_WIDTH, LEFT_PADDING, CONT_CLASS_COLOURS, \
+                      ACS_TOP_BAR_WIDTH as ACS_WIDTH
 
 from ....sql.exceptions import FieldError
 
@@ -72,7 +75,7 @@ class BarTemplate:
         self.length = col_len
         rept = '═' * col_len
 
-        
+
 
         # === Handle column stuff ===
 

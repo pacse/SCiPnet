@@ -1,13 +1,9 @@
 """
 Display functions related to file access
 
-Included in *:
 - redacted()
 - expunged()
 - granted()
-
-Excluded from *:
-- all imports
 """
 
 from .core.boxes import basic_box_with_text
@@ -54,10 +50,3 @@ def granted(file: str) -> None:
         [f'FILE_REF: {file} ACCESS GRANTED'],
         ['ACCESS GRANTED'],
     )
-
-
-__all__ = [
-    'redacted',
-    'expunged',
-    'granted'
-]

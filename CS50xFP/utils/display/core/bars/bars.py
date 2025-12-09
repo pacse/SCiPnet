@@ -1,9 +1,11 @@
 """
-Functions and classes for rendering bars (eg. ACS)
+BarTemplate implementations for rendering bars
 
 Contains:
-- BarTemplate: Template for user/site/SCP/MTF display bars
-- scp_bar: Renders an ACS bar
+- acs_bar: Renders an ACS bar
+- mtf_bar: Renders an MTF bar
+- site_bar: Renders a Site bar
+- user_bar: Renders a User bar
 """
 
 

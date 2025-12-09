@@ -1,5 +1,11 @@
 """
 Helpers for printing piped lines and `print_piped_line()`
+
+Contains
+--------
+- format_centered_text: Formats centered text for piped line printing
+- print_centered_line: Renders centered text to console
+- print_piped_line: Renders piped, centered text to console
 """
 
 # === Imports ===
@@ -16,7 +22,6 @@ from typing import Literal
 
 
 # === Helpers ===
-
 
 # Text formatting
 def default_formatting(string: str) -> Text:
@@ -209,6 +214,20 @@ def format_centered_text(
                                    Text | str, str, Literal['║','']]:
     """
     Formats centered text
+
+    Parameters
+    ----------
+    string : str
+        Text to print
+    side : {'l', 'r', 'c'}
+        Which side of the bar the line is on: (affects placement of extra space if needed)
+    style : str or None, optional
+        string to use for text styling.
+        If None, uses default styling.
+    content_width : int, default=BAR_WIDTH
+        Width of the line content area
+    right_sep : {'║', ''}, default='║'
+        Right separator
 
     Returns
     -------
