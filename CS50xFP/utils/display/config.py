@@ -57,8 +57,11 @@ BAR_WIDTH = 58
 ACS_TOP_BAR_WIDTH = [32, 54, 32]
 """Width of text areas of the top bar for ACS & MTF (left, center, right)"""
 
-BOX_SIZE = 35 # fits most messages nicely
-"""Default box size for boxed messages"""
+DEFAULT_BOX_SIZE = 35 # fits most messages nicely
+"""Default text area size for boxed messages"""
+
+MAX_BOX_SIZE = 100
+"""Maximum text area size for boxed messages"""
 
 SIZE = _get_term_width()
 """Terminal width in columns, adjusted to be even"""
@@ -126,7 +129,7 @@ QUOTED_REGEX = r'"[^"]*"'
 __all__ = [
     'MIN_TERM_WIDTH',
     'BAR_WIDTH',
-    'BOX_SIZE',
+    'DEFAULT_BOX_SIZE',
     'SIZE',
     'CLEAR_LVL_COLOURS',
     'CONT_CLASS_COLOURS'

@@ -14,7 +14,7 @@ from datetime import datetime
 # for validation
 import re, ipaddress
 
-wk_hash_regex = r'scrypt:32768:8:1\$[A-Za-z0-9]{16}\$[A-Za-z0-9]{128}'
+WK_HASH_REGEX = r'scrypt:32768:8:1\$[A-Za-z0-9]{16}\$[A-Za-z0-9]{128}'
 """werkzeug hash regex for validation"""
 
 
@@ -55,14 +55,11 @@ def rel(to: str,
     """
     Returns a relationship to another table.
     """
-    if keys:
-        return relationship(to,
-                            back_populates=back_pop, foreign_keys=keys)
     return relationship(to,
-                        back_populates=back_pop)
+                        back_populates=back_pop, foreign_keys=keys)
+
 
 # ease of life Mixin
-
 class HelperTableMixin:
     """
     Mixin that adds a 50 char `name` column.
@@ -81,10 +78,12 @@ class Base(DeclarativeBase):
     id = col_int_pk()
 
     created_at = Column(DateTime, default=datetime.now, nullable=False)
-    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now,
-                        nullable=False)
+    updated_at = Column(DateTime, default=datetime.now,
+                        onupdate=datetime.now, nullable=False)
 
-# ==== Main Models ====
+
+
+# === Main Models ===
 
 class User(Base):
     __tablename__ = 'users'
@@ -121,10 +120,10 @@ class User(Base):
     @validates('password', 'override_phrase')
     def validate_hash(self, key, value):
         if len(value) != 162:
-            raise ValueError(f'Error with {key!r}: Werkzeug hash must be 162 characters long')
+            raise ValueError(f'Error with {key!r}:\nWerkzeug hash must be 162 characters long')
 
-        elif not re.fullmatch(wk_hash_regex, value):
-            raise ValueError(f'Error with {key!r}: Provided value is not a valid Werkzeug hash (correct length (162), did not match regex)')
+        elif not re.fullmatch(WK_HASH_REGEX, value):
+            raise ValueError(f'Error with {key!r}:\nProvided value is not a valid Werkzeug hash (correct length (162), did not match regex)')
         return value
 
 

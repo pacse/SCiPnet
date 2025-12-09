@@ -1,51 +1,101 @@
 """
 `basic_box()` and `basic_box_with_text()` for most error and info messages
 """
-from ..helpers import *
-from ..config import BOX_SIZE
+from ..helpers import print_lines, printc, timestamp
+from ..config import DEFAULT_BOX_SIZE, MAX_BOX_SIZE
+from ...sql.exceptions import FieldError
 
 
-def basic_box(lines: list[str], size: int = BOX_SIZE) -> None:
+
+def basic_box(lines: list[str]) -> None:
     """
     Prints a formatted box with the provided lines centered inside
+
+    Parameters
+    ----------
+    lines : list[str]
+        The lines to be displayed inside the box
+
+    Raises
+    ------
+    ValueError
+        If `lines` is empty
+    TypeError
+        If any element in `lines` is not a string
     """
-    # calculate box width
-    box_width = size - 2
+    # validate input
+    if not lines:
+        raise ValueError('lines must contain at least one line')
+    if not all(isinstance(line, str) for line in lines):
+        raise TypeError('all lines must be strings')
+
+
+    # determine box width
+    max_line_len = max(len(line) for line in lines)
+    box_width = max(DEFAULT_BOX_SIZE, max_line_len + 4)  # ensure 2 spaces padding each side
+
+    # check width
+    if box_width > MAX_BOX_SIZE:
+        raise FieldError(
+            'line length', max_line_len,
+            f'longest line to be {MAX_BOX_SIZE - 4} chars or fewer'
+        )
+
+    # === Render ===
 
     # reused strs
     TOP_BOTTOM = '═' * box_width
     EMPTY = f'║{' ' * box_width}║'
 
-
-    # generate box
-    box = ['', f'╔{TOP_BOTTOM}╗', EMPTY]
-
-    for line in lines:
-        box.append(f'║{line.center(box_width)}║')
-
-    box.append(EMPTY)
-    box.append(f'╚{TOP_BOTTOM}╝')
-    box.append('')
-
-    # print box
-    print_lines(box)
+    print_lines([
+        '',
+        f'╔{TOP_BOTTOM}╗',
+        EMPTY,
+        *[f'║{line:^{box_width}}║' for line in lines],
+        EMPTY,
+        f'╚{TOP_BOTTOM}╝',
+        ''
+    ])
 
 
-def basic_box_with_text(text: list[str],
+def basic_box_with_text(
                         box_text: list[str],
-                        box_size: int = BOX_SIZE,
+                        desc_text: list[str],
                         RAISA_log: bool = True
                        ) -> None:
     """
     Prints a formatted box with `box_text` centered
-    inside followed by `text` centered below the box
+    inside followed by `desc_text` centered below the box
 
     If RAISA_log is True, says the action was logged
     to RAISA @ the current timestamp
-    """
 
-    basic_box(box_text, box_size)
-    print_lines(text)
+    Parameters
+    ----------
+    box_text : list[str]
+        The lines to be displayed inside the box
+    desc_text : list[str]
+        Description lines to be displayed below the box
+    RAISA_log : bool, default=True
+        Whether to indicate logging to RAISA, by default True
+
+    Raises
+    ------
+    ValueError
+        If `box_text` or `desc_text` is empty
+    TypeError
+        If any element in `box_text` or `desc_text` is not a string
+    """
+    # validate desc_text (box_text is validated in basic_box)
+    if not desc_text:
+        raise ValueError('desc_text must contain at least one line')
+
+    if not all(isinstance(line, str) for line in desc_text):
+        raise TypeError('all desc_text lines must be strings')
+
+    # render
+    basic_box(box_text)
+    print_lines(desc_text)
     if RAISA_log:
         printc(f'Logged to RAISA at {timestamp()}')
 
