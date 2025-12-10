@@ -8,14 +8,17 @@ Contains
 """
 
 from .helpers import clear, printc, print_lines
-from .config import SIZE
-
+from .config import SIZE, LOAD_RATE, HICCUP_PROBABILITY, \
+                    HICCUP_DELAY, SPECIAL_TITLES, AUTH_TYPES
 from ..__init__ import __version__
 from ..sql.models import Models
 
 from time import sleep
 from random import expovariate, uniform, choice
 
+# reused strs
+TOP_LINE = '/' * 120
+LOWER_TOP_LINE = '/' * 4 + ' ' * 112 + '/' * 4
 
 
 def sim_load() -> None:
@@ -24,29 +27,28 @@ def sim_load() -> None:
 
     Organic timing logic by ChatGPT
     """
-    base_lines = [
+
+    lines = [
         ('> Establishing encrypted tunnel to Deepwell Servers', 0.2, 0.5),
         ('> Syncing with Recordkeeping And Information Security Administration (RAISA)', 0.3, 0.7),
         ('> Validating cryptographic token', 0.8, 1.4),
         ('> SCiPNET interface launch sequence initiated', 0.4, 0.9)
     ]
 
-
-    for line, min_t, max_t in base_lines:
-        sleep(expovariate(2))
+    for line, min_t, max_t in lines:
+        sleep(expovariate(LOAD_RATE))
 
         printc(line, end='', flush=True)
 
         for _ in range(3):
             sleep(uniform(min_t, max_t))
 
-            line += ' .'
-            print('\r' + line.center(SIZE), end='', flush=True)
+            line = f'{line} .'
+            print(f'\r{line:^{SIZE}}', end='', flush=True)
 
         # occasional hiccup for 'lag'
         if choice([True, False, False, False]):
-            sleep(uniform(1, 2.5))
-
+            sleep(uniform(*HICCUP_DELAY))
 
     sleep(0.25)
     print('\n')
@@ -86,17 +88,33 @@ def startup() -> None:
     # simulate loading (bc it's cool)
     sim_load()
     print_lines([
-        'SCP Foundation CoreNode Connection: STABLE',
-        '',
-        '[The Foundation database is CLASSIFIED]',
-        '[Unauthorized access will result in detainment]',
-        ''
-    ])
+                 'SCP Foundation CoreNode Connection: STABLE',
+                 '',
+                 '[The Foundation database is CLASSIFIED]',
+                 '[Unauthorized access will result in detainment]',
+                 ''
+               ])
 
 
+def _gen_login_lines(title: str) -> list[str]:
     """
     Generates lines to print based on user title
     """
+
+    # validate title
+    if title not in SPECIAL_TITLES:
+        raise ValueError(f'got invalid title: {title}, '
+                         f'expected title to be in {SPECIAL_TITLES}')
+
+    # generate dynamic vals
+    auth_type = AUTH_TYPES[title]
+    clearance = 
+
+    result = ['', TOP_LINE, LOWER_TOP_LINE]
+
+
+    return result
+
 def login(usr: Models.User) -> None:
     """
     prints fancy login messages when
@@ -104,11 +122,6 @@ def login(usr: Models.User) -> None:
 
     Art by ChatGPT
     """
-
-    # reused strs
-    reused1 = '/' * 4 + ' ' * 112 + '/' * 4
-    reused2 = '/' * 120
-    title = usr.title.name
 
     # set lines depending on usr title
     if title == 'O5 Council Member':
