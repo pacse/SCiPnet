@@ -2,7 +2,7 @@
 Display functions related to file creation
 """
 from .core.boxes import basic_box_with_text
-from .helpers import f_id as format_id
+
 
 # reused a few times
 PERSISTS = 'CONTACT YOUR SITE NETWORK ADMINISTRATOR IF ISSUES PERSIST'
@@ -95,5 +95,5 @@ def created_f(f_type: str, f_id: int) -> None:
     """
     basic_box_with_text(
         ['FILE CREATED SUCCESSFULLY'],
-        [f'{f_type.upper()}-{format_id(f_id)} INITIALIZED'],
+        [f'{f_type.upper()}-{f_id:03d} INITIALIZED'],
     )
