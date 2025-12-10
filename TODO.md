@@ -63,20 +63,20 @@ NOTE:
 ## helpers.py - TODOs
 
 ### High Priority
-- [ ] **Add input validation to `printc()`**
+- [x] **Add input validation to `printc()`**
   - Validate [`string`]helpers.py ) is actually a string
   - Handle empty strings gracefully
 
-- [ ] **Add docstring parameters documentation**
+- [x] **Add docstring parameters documentation**
   - Document [`end`]helpers.py ) and [`flush`]helpers.py ) parameters in [`printc()`]helpers.py )
   - Add parameter types to all docstrings
 
 ### Medium Priority
-- [ ] **Add error handling to `clear()`**
+- [x] **Add error handling to `clear()`**
   - Wrap [`system()`](/c:/Users/packa/AppData/Local/Programs/Python/Python313/Lib/os.py ) calls in try-except
   - Handle cases where shell commands fail
 
-- [ ] **Consider timezone awareness in `timestamp()`**
+- [x] **Consider timezone awareness in `timestamp()`**
   - Add optional timezone parameter
   - Document that current implementation uses local time
 
@@ -89,12 +89,12 @@ NOTE:
 ## config.py - TODOs
 
 ### High Priority
-- [ ] **Fix `MAX_BOX_SIZE` validation**
+- [x] **Fix `MAX_BOX_SIZE` validation**
   - Currently defined but never enforced
   - Add validation in [`basic_box()`](CS50xFP/utils/display/core/boxes.py ) that uses this constant
 
 ### Medium Priority
-- [ ] **Document why `MIN_TERM_WIDTH = 120`**
+- [x] **Document why `MIN_TERM_WIDTH = 120`**
   - Add comment explaining this specific width requirement
   - Consider if this could be configurable
 
@@ -124,7 +124,7 @@ NOTE:
   - Extract common pattern into helper function
 
 ### Medium Priority
-- [ ] **Add user validation in `login()`**
+- [x] **Add user validation in `login()`**
   - Validate [`usr`]system.py ) is not None
   - Validate required fields exist
 
