@@ -1,6 +1,12 @@
 """
-`basic_box()` and `basic_box_with_text()` for most error and info messages
+Box generators for displays
+
+Contains
+--------
+- basic_box: Prints a multiline box
+- basic_box_with_text: Prints a multiline box with text below
 """
+
 from ..helpers import print_lines, printc, timestamp
 from ..config import DEFAULT_BOX_SIZE, MAX_BOX_SIZE
 from ...sql.exceptions import FieldError
@@ -19,7 +25,8 @@ def basic_box(lines: list[str]) -> None:
     Raises
     ------
     ValueError
-        If `lines` is empty
+        - If `lines` is empty
+        - If longest line is greater than `MAX_BOX_SIZE - 4` (-4 due to padding)
     TypeError
         If any element in `lines` is not a string
     """

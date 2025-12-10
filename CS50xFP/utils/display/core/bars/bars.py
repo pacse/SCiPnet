@@ -1,7 +1,8 @@
 """
 BarTemplate implementations for rendering bars
 
-Contains:
+Contains
+--------
 - acs_bar: Renders an ACS bar
 - mtf_bar: Renders an MTF bar
 - site_bar: Renders a Site bar

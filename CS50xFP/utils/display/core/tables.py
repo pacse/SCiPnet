@@ -1,5 +1,12 @@
 """
-Helpers for printing tables
+Functions to render tables from pydantic models
+
+Contains
+--------
+- print_table_audit_logs: Prints a table of audit logs
+- print_table_mtfs: Prints a table of mtfs
+- print_table_scps: Prints a table of scps
+- print_table_users: Prints a table of users
 """
 
 from ...sql import models as Models
@@ -149,7 +156,6 @@ def _format_audit_log(log: Models.AuditLog) -> dict[str, str]:
            }
 
 
-
 def _print_generic_table(
                          data_type: Type[T],
                          data: list[T],
@@ -172,18 +178,17 @@ def _print_generic_table(
 
 # === Main functions ===
 
-def print_table_users(data: list[Models.User]) -> None:
-
-    _print_generic_table(Models.User, data, _format_user)
-
-
-def print_table_scp(data: list[Models.SCP]) -> None:
-
-    _print_generic_table(Models.SCP, data, _format_scp)
+def print_table_audit_logs(data: list[Models.AuditLog]) -> None:
+    _print_generic_table(Models.AuditLog, data, _format_audit_log)
 
 
 def print_table_mtfs(data: list[Models.MTF]) -> None:
     _print_generic_table(Models.MTF, data, _format_mtf)
 
-def print_table_audit_logs(data: list[Models.AuditLog]) -> None:
-    _print_generic_table(Models.AuditLog, data, _format_audit_log)
+
+def print_table_scps(data: list[Models.SCP]) -> None:
+    _print_generic_table(Models.SCP, data, _format_scp)
+
+
+def print_table_users(data: list[Models.User]) -> None:
+    _print_generic_table(Models.User, data, _format_user)

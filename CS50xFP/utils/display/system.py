@@ -1,13 +1,10 @@
 """
 System display functions
 
-Included in *:
+Contains
+--------
 - startup()
 - login()
-
-Excluded from *:
-- all imports
-- sim_load()
 """
 
 from .helpers import clear, printc, print_lines
@@ -97,6 +94,9 @@ def startup() -> None:
     ])
 
 
+    """
+    Generates lines to print based on user title
+    """
 def login(usr: Models.User) -> None:
     """
     prints fancy login messages when
