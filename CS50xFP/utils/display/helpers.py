@@ -21,7 +21,6 @@ def printc(
            end: str = '\n',
            flush: bool = False
           ) -> None:
-  print(string.center(SIZE), end=end, flush=flush)
     """
     Prints `string` centered to the terminal size
 
@@ -34,6 +33,21 @@ def printc(
     flush : bool
         whether to forcibly flush `string`
     """
+
+    # validation
+    if not isinstance(string, str):
+        raise TypeError('Expected `string` to be type str,'
+                        f'received {type(string).__name__}')
+    if not isinstance(end, str):
+        raise TypeError('Expected `end` to be type str,'
+                        f'received {type(end).__name__}')
+    if not isinstance(flush, bool):
+        raise TypeError('Expected `flush` to be type bool'
+                        f'received {type(flush).__name__}')
+
+    # print
+    print(f'{string:^{SIZE}}', end=end, flush=flush)
+
 
 def print_lines(
                 lines: list[str]
@@ -53,23 +67,33 @@ def print_lines(
 
 
 def clear() -> None:
-    '''
-    Clear the screen
-    '''
+    """
+    Clears the screen
+    """
     # OS is windows
     if name == 'nt':
-        system("cls")
+        command = 'cls'
     # OS is mac or linux (or any other I guess, it's an else statement...)
     else:
-        system("clear")
+        command = 'clear'
+
+    try:
+        system(command)
+    except Exception as e:
+        raise OSError(f'Failed to execute clear: {e}') from e
 
 
 def timestamp() -> str:
-  '''
-  Gets the current timestamp
+    """
+    Gets the current timestamp (uses local timezone)
 
-  Format: YYYY/MM/DD - HH/MM/SS
-  '''
-  curr_dt = datetime.now()
-  return curr_dt.strftime("%Y/%m/%d - %H/%M/%S")
+    Only for use client-side as server uses UTC
+
+    Returns
+    -------
+    current_datetime : str
+        The curent datetime formatted as: YYYY/MM/DD - HH/MM/SS
+    """
+    curr_dt = datetime.now()
+    return curr_dt.strftime(r'%Y/%m/%d - %H/%M/%S')
 
