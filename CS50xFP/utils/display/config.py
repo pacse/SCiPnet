@@ -1,23 +1,32 @@
 """
 Display configuration settings and constants
 
-Included in *:
+Contains
+--------
 - MIN_TERMINAL_WIDTH
 - BAR_WIDTH
-- BOX_SIZE
+- ACS_TOP_BAR_WIDTH
+- DEFAULT_BOX_SIZE
+- MAX_BOX_SIZE
 - SIZE
+- LEFT_PADDING
+
 - CLEAR_LVL_COLOURS
 - CONT_CLASS_COLOURS
-
-Excluded from *:
-- all imports
-- HEX_CODE_REGEX
 - OTHER_CONT_CLASS
+- CONT_CLASS_COLOURS
+
+- PLACEHOLDER
+- SPECIAL_TEXTS
+- ACTIVE_TEXT
+- DIGIT_REGEX
+- QUOTED_REGEX
 """
 
 from collections import defaultdict
 
 # disable markdown_it logging
+# (causes problems with rich if not disabled)
 import logging
 logging.getLogger('markdown_it').setLevel(logging.WARNING)
 
@@ -49,7 +58,10 @@ def _get_term_width() -> int:
 # === Mayuk size constants ===
 
 MIN_TERM_WIDTH = 120
-"""Minimum terminal width required for proper display"""
+"""
+Minimum terminal width required for proper display
+(largest fixed-width display is 120 chars)
+"""
 
 BAR_WIDTH = 58
 """Width of text areas used in user/site/SCP/MTF display"""
@@ -109,6 +121,7 @@ keys are containment classes
 
 
 # === Other Constants ===
+
 PLACEHOLDER = '\x00\x00'
 """Placeholder string for escaped colons in text formatting"""
 
@@ -118,19 +131,33 @@ SPECIAL_TEXTS = ['[DATA EXPUNGED]', 'None', 'Inactive']
 ACTIVE_TEXT = 'Active'
 """Text styled in green"""
 
+
 # === Regex Patterns ===
+
 DIGIT_REGEX = r'(?<!O)5|[0-46-9]'
 """Regex pattern matching digits, excluding O5"""
 
 QUOTED_REGEX = r'"[^"]*"'
 """Regex pattern matching text in double quotes"""
 
-# what's importable
-__all__ = [
-    'MIN_TERM_WIDTH',
-    'BAR_WIDTH',
-    'DEFAULT_BOX_SIZE',
-    'SIZE',
-    'CLEAR_LVL_COLOURS',
-    'CONT_CLASS_COLOURS'
-]
+
+# === system.py constants ===
+
+LOAD_RATE = 2
+"""`lambd` value to use for `random.expovariate`"""
+
+HICCUP_PROBABILITY = 0.25
+"""Probability `sim_load` should encounter a hiccup"""
+
+HICCUP_DELAY = (1, 2.5)
+"""Args for `random.uniform` when a hiccup is encountered"""
+
+SPECIAL_TITLES = ['O5 Council Member', 'Site Director', 'Administrator']
+"""User titles that get a fancy login screen"""
+
+AUTH_TYPES = {
+     'O5 Council Member': 'O5',
+     'Site Director': 'DIRECTOR',
+     'Administrator': 'ADMINISTRATOR'
+}
+"""Authorization types associated with each special title"""
