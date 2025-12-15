@@ -7,46 +7,115 @@ Display functions related to file access
 """
 
 from .core.boxes import basic_box_with_text
+from .config import AccessMessages as AM
+from .helpers import check_type_and_empty_str
 
-def redacted(file: str, file_classification: str, usr_clearance: str) -> None:
-    """
-    prints a message saying `file` is above your clearance
 
-    art by ChatGPT
+def redacted(
+             file_ref: str,
+             file_classification: str,
+             usr_clearance: str
+            ) -> None:
     """
+    prints a message saying `file_ref` is above your clearance
+
+    Parameters
+    ----------
+    file_ref : str
+        the file reference being accessed
+    file_classification : str
+        the classification level of the file
+    usr_clearance : str
+        the clearance level of the user
+
+    Raises
+    ------
+    TypeError
+        If any parameter is not a string
+    ValueError
+        If any parameter is empty or whitespace
+
+    Notes
+    -----
+    - Calls `basic_box_with_text()` with `RAISA_log = True`
+    - Art by ChatGPT
+    """
+
+    # validation
+    for v, v_name in [
+                      (file_ref, 'file_ref'),
+                      (file_classification, 'file_classification'),
+                      (usr_clearance, 'usr_clearance')
+                     ]:
+        check_type_and_empty_str(v, v_name)
 
     basic_box_with_text(
-        [
-         f'FILE_REF: {file} REDACTED',
-         f'CLEARANCE {file_classification} REQUIRED',
-         f'(YOU ARE CLEARANCE {usr_clearance})'
-        ],
-        ['ACCESS DENIED'],
+                        [AM.REDACTED_BOX],
+                        [
+                         AM.REDACTED_FILE.format(file_ref=file_ref),
+                         AM.REDACTED_REQUIRED.format(
+                            file_clear=file_classification
+                         ),
+                         AM.REDACTED_USER.format(usr_clear=usr_clearance)
+                        ]
+                       )
 
-    )
 
-
-def expunged(file: str) -> None:
+def expunged(file_ref: str) -> None:
     """
-    prints a message saying `file` has been expunged
+    prints a message saying `file_ref` has been expunged
 
-    art by ChatGPT
+    Parameters
+    ----------
+    file_ref : str
+        the file reference being accessed
+
+    Raises
+    ------
+    TypeError
+        If `file_ref` is not a string
+    ValueError
+        If `file_ref` is empty or whitespace
+
+    Notes
+    -----
+    - Calls `basic_box_with_text()` with `RAISA_log = True`
+    - Art by ChatGPT
     """
+
+    check_type_and_empty_str(file_ref, 'file_ref')
 
     basic_box_with_text(
-        [f'FILE_REF: {file} NOT FOUND'],
-        ['DATA EXPUNGED'],
-    )
+                        [AM.EXPUNGED_BOX],
+                        [AM.EXPUNGED_FILE.format(file_ref=file_ref)],
+                       )
 
 
-def granted(file: str) -> None:
+def granted(file_ref: str) -> None:
     """
-    prints a message saying access has been granted to `file`
+    prints a message saying access has been granted to `file_ref`
 
-    art by ChatGPT
+    Parameters
+    ----------
+    file_ref : str
+        the file reference being accessed
+
+    Raises
+    ------
+    TypeError
+        If `file_ref` is not a string
+    ValueError
+        If `file_ref` is empty or whitespace
+
+    Notes
+    -----
+    - Calls `basic_box_with_text()` with `RAISA_log = True`
+    - Art by ChatGPT
     """
+
+    check_type_and_empty_str(file_ref, 'file_ref')
 
     basic_box_with_text(
-        [f'FILE_REF: {file} ACCESS GRANTED'],
-        ['ACCESS GRANTED'],
-    )
+                        [AM.GRANTED_BOX],
+                        [AM.GRANTED_FILE.format(file_ref=file_ref)],
+                       )
