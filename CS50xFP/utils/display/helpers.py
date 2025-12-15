@@ -3,8 +3,13 @@ Helpers for display functions
 
 Contains
 --------
+- check_type_and_empty_str()
+
 - printc()
 - print_lines()
+- print_md()
+- print_md_title()
+
 - clear()
 - timestamp()
 """

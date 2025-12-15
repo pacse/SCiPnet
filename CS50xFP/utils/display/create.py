@@ -12,7 +12,22 @@ def create_f(f_type: str) -> None:
     """
     Prints a simple message for file creation
 
-    art by ChatGPT
+    Parameters
+    ----------
+    f_type : str
+        the type of file being created
+
+    Raises
+    ------
+    TypeError
+        If `f_type` is not a string
+    ValueError
+        If `f_type` is empty or whitespace
+
+    Notes
+    -----
+    - Calls `basic_box_with_text()` with `RAISA_log = True`
+    - Art by ChatGPT
     """
     basic_box_with_text(
                         [CM.CREATE_BOX],
@@ -21,13 +36,30 @@ def create_f(f_type: str) -> None:
 
 
 def clearance_denied(
-                     needed_clearance: str,
-                     usr_clearance: str
+                     required_clearance: str,
+                     user_clearance: str
                     ) -> None:
     """
     Tells the usr they have insufficient clearance for file creation
 
-    art by ChatGPT
+    Parameters
+    ----------
+    required_clearance : str
+        the clearance level needed to create the file
+    user_clearance : str
+        the clearance level of the user
+
+    Raises
+    ------
+    TypeError
+        If any parameter is not a string
+    ValueError
+        If any parameter is empty or whitespace
+
+    Notes
+    -----
+    - Calls `basic_box_with_text()` with `RAISA_log = True`
+    - Art by ChatGPT
     """
     basic_box_with_text(
                         [CM.INSUFFICIENT_CLEAR_BOX],
@@ -43,6 +75,22 @@ def clearance_denied(
 def invalid_f_type(f_type: str) -> None:
     """
     Tells a user `f_type` is not a valid filetype
+
+    Parameters
+    ----------
+    f_type : str
+        the file type being created
+
+    Raises
+    ------
+    TypeError
+        If `f_type` is not a string
+    ValueError
+        If `f_type` is empty or whitespace
+
+    Notes
+    -----
+    - Calls `basic_box_with_text()` with `RAISA_log = True`
     """
     basic_box_with_text(
                         [CM.INVALID_FD_BOX],
@@ -64,7 +112,10 @@ def no_data_recvd() -> None:
     """
     Tells a user the server received no data
 
-    Art by ChatGPT
+    Notes
+    -----
+    - Calls `basic_box_with_text()` with `RAISA_log = True`
+    - Art by ChatGPT
     """
     basic_box_with_text(
                         [CM.NO_DATA_RECVD_BOX],
@@ -86,9 +137,28 @@ def no_response() -> None:
 
 def created_f(f_type: str, f_id: int) -> None:
     """
-    prints a message saying a file was successfully created
+    Prints a message saying a file was successfully created
 
-    art by ChatGPT
+    Parameters
+    ----------
+    f_type : str
+        the type of file being created
+    f_id : int
+        the ID of the created file
+
+    Raises
+    ------
+    TypeError
+        - If `f_type` is not a string
+        - If `f_id` is not an int
+    ValueError
+        - If `f_type` is empty or whitespace
+        - If `f_id` is negative
+
+    Notes
+    -----
+    - Calls `basic_box_with_text()` with `RAISA_log = True`
+    - Art by ChatGPT
     """
     basic_box_with_text(
                         [CM.FILE_CREATED_BOX],
