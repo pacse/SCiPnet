@@ -13,8 +13,7 @@ from ..__init__ import __version__
 from ..sql.models import Models
 
 from time import sleep
-from random import expovariate, uniform, choice
-
+from random import expovariate, uniform
 
 
 def sim_load() -> None:
@@ -28,7 +27,7 @@ def sim_load() -> None:
 
     lines = [
         ('> Establishing encrypted tunnel to Deepwell Servers', 0.2, 0.5),
-        ('> Syncing with Recordkeeping And Information Security Administration (RAISA)', 0.3, 0.7),
+        (f'> Syncing with {Load.RAISA} (RAISA)', 0.3, 0.7),
         ('> Validating cryptographic token', 0.8, 1.4),
         ('> SCiPNET interface launch sequence initiated', 0.4, 0.9)
     ]
@@ -37,18 +36,16 @@ def sim_load() -> None:
         sleep(expovariate(Load.LOAD_RATE))
         printc(line, end='', flush=True)
 
-        for _ in range(3):
+        for i in range(1, 4): # three dots
             sleep(uniform(min_t, max_t))
-
-            line = f'{line} .'
-            print(f'\r{line:^{SIZE}}', end='', flush=True)
+            printc(f'{line}{" ." * i}', end='', flush=True, overwrite=True) # one char over 😭
 
         # occasional hiccup for 'lag'
         if uniform(0, 1) < Load.HICCUP_PROBABILITY:
             sleep(uniform(*Load.HICCUP_DELAY))
 
     sleep(0.25)
-    print('\n')
+    print('\n') # extra newline after loading for spacing
 
 
 def startup() -> None:
@@ -62,7 +59,7 @@ def startup() -> None:
     """
     clear()
 
-    # main terminal screen
+    # main terminal screen (ignore line length)
     print_lines([
         '',
         '███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀',
@@ -87,6 +84,7 @@ def startup() -> None:
 
     # simulate loading (bc it's cool)
     sim_load()
+    sleep(0.5)
     print_lines([
                  'SCP Foundation CoreNode Connection: STABLE',
                  '',
@@ -103,12 +101,6 @@ def _f_line(line: str) -> str:
 def _gen_login_lines(title: str, name: str) -> list[str]:
     """
     Generates lines to print based on user title
-    """
-
-    # validate title
-    if title not in SPECIAL_TITLES:
-        raise ValueError(f'got invalid title: {title}, '
-                         f'expected title to be in {SPECIAL_TITLES}')
 
     Parameters
     ----------
@@ -156,7 +148,6 @@ def _gen_login_lines(title: str, name: str) -> list[str]:
             FL.SEP, FL.TB_LINE, ''
            ]
 
-    return result
 
 def login(usr: Models.User) -> None:
     """
@@ -178,70 +169,24 @@ def login(usr: Models.User) -> None:
     Art by ChatGPT
     """
 
-    # set lines depending on usr title
-    if title == 'O5 Council Member':
-        lines = [
-            '',
-            reused2,
-            reused1,
-            '////' + f'{'<< O5 AUTHORIZATION VERIFIED >>':^112}' + '////',
-            reused1,
-            '////' + f'{'CLEARANCE LEVEL: 6 - COSMIC TOP SECRET':^112}' + '////',
-            reused1,
-            '////' + f'{f'Welcome back, {usr.name}.':^112}' + '////',
-            '////' + f'{f'This session is being logged by CoreNode Zero.':^112}' + '////',
-            reused1,
-            '////' + f'{'SYSTEM STATUS: OPERATIONAL | DEEPWELL CHANNEL ENCRYPTED':^112}' + '////',
-            reused1,
-            reused2,
-            '',
-        ]
+    # validation
+    if not isinstance(usr, Models.User):
+        raise TypeError(f'expected `usr` to be type Models.User,'
+                        f' got {type(usr).__name__}')
+    # rest is handled by pydantic
 
-    elif title == 'Site Director':
-        lines = [
-            '',
-            reused2,
-            reused1,
-            '////' + f'{'<< DIRECTOR AUTHORIZATION VERIFIED >>':^112}' + '////',
-            reused1,
-            '////' + f'{'CLEARANCE LEVEL: 5 - TOP SECRET':^112}' + '////',
-            reused1,
-            '////' + f'{f'Welcome back, {usr.name}.':^112}' + '////',
-            '////' + f'{'All actions are recorded and reviewed by O5 Liaison - Node Black':^112}' + '////',
-            reused1,
-            '////' + f'{'SYSTEM STATUS: OPERATIONAL | DEEPWELL CHANNEL ENCRYPTED':^112}' + '////',
-            reused1,
-            reused2,
-            '',
-        ]
 
-    elif title == 'Administrator':
-        lines = [
-            '',
-            reused2,
-            reused1,
-            '////' + f'{'<< ADMINISTRATOR AUTHORIZATION VERIFIED >>':^112}' + '////',
-            reused1,
-            '////' + f'{'CLEARANCE LEVEL: UNBOUNDED | OVERRIDE: UNIVERSAL | LOGGING: DISABLED':^112}' + '////',
-            reused1,
-            '////' + f'{'Welcome, Administrator. All systems stand by for your instruction.':^112}' + '////',
-            '////' + f'{'There are no restrictions. There are no records.':^112}' + '////',
-            reused1,
-            '////' + f'{'SYSTEM STATUS: OPERATIONAL | DEEPWELL CHANNEL ENCRYPTED | ENCLAVE MODE ACTIVE':^112}' + '////',
-            reused1,
-            reused2,
-            '',
-        ]
+    # set lines depending on usr title & name
     if usr.title.name in Logins.PROFILES.keys():
         lines = _gen_login_lines(usr.title.name, usr.name)
 
     else:
         lines = [
-            '',
-            f'Welcome back, {title} {usr.name}',
-            f'(Clearance {usr.clearance_lvl.name})',
-            '',
-        ]
+                 '',
+                 f'Welcome back, {usr.title.name} {usr.name}',
+                 f'(Clearance {usr.clearance_lvl.name})',
+                 '',
+                ]
 
     print_lines(lines)
 
@@ -251,12 +196,17 @@ if __name__ == '__main__':
     print('Testing system display functions...\n\n')
     startup()
 
+    from datetime import datetime
+
     test_user = Models.User(
         id=1,
         name='Jane Doe',
         title=Models.IDandName(id=2, name='Site Director'),
-        clearance_lvl=Models.IDandName(id=5, name='Top Secret')
+        clearance_lvl=Models.IDandName(id=5, name='Top Secret'),
+        site_id=1,
+        created_at=datetime.now(), updated_at=datetime.now()
     )
+
     login(test_user)
 
     test_user.title = Models.IDandName(id=1, name='O5 Council Member')
