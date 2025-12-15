@@ -4,13 +4,8 @@ Display functions related to file creation
 from .core.boxes import basic_box_with_text
 
 
-# reused a few times
-PERSISTS = 'CONTACT YOUR SITE NETWORK ADMINISTRATOR IF ISSUES PERSIST'
+from .config import CreateMessages as CM
 
-TRY_AGAIN = [
-    'PLEASE TRY AGAIN',
-    PERSISTS
-]
 
 
 def create_f(f_type: str) -> None:
@@ -20,9 +15,9 @@ def create_f(f_type: str) -> None:
     art by ChatGPT
     """
     basic_box_with_text(
-        ['FILE CREATION'],
-        [f_type]
-    )
+                        [CM.CREATE_BOX],
+                        [f_type.upper()]
+                       )
 
 
 def clearance_denied(
@@ -35,12 +30,14 @@ def clearance_denied(
     art by ChatGPT
     """
     basic_box_with_text(
-        ['INSUFFICIENT CLEARANCE'],
-        [
-         f'CLEARANCE {needed_clearance} REQUIRED TO CREATE FILE',
-         f'(YOU ARE CLEARANCE {usr_clearance})'
-        ]
-    )
+                        [CM.INSUFFICIENT_CLEAR_BOX],
+                        [
+                         CM.CLEAR_REQUIRED.format(
+                            needed_clear=required_clearance
+                         ),
+                         CM.USER_CLEAR.format(usr_clear=user_clearance)
+                        ]
+                       )
 
 
 def invalid_f_type(f_type: str) -> None:
@@ -48,9 +45,9 @@ def invalid_f_type(f_type: str) -> None:
     Tells a user `f_type` is not a valid filetype
     """
     basic_box_with_text(
-        ['INVALID FILE TYPE'],
-        [f'{f_type.upper()} IS NOT A VALID FILE TYPE'],
-    )
+                        [CM.INVALID_FD_BOX],
+                        [CM.NOT_VALID.format(f_type=f_type)]
+                       )
 
 
 def invalid_f_data() -> None:
@@ -58,9 +55,9 @@ def invalid_f_data() -> None:
     Tells a user file data is invalid
     """
     basic_box_with_text(
-        ['INVALID FILE DATA'],
-        ['PLEASE CHECK FILE DATA AND TRY AGAIN', PERSISTS]
-    )
+                        [CM.INVALID_FD_BOX],
+                        [CM.CHECK_DATA, CM.PERSISTS]
+                       )
 
 
 def no_data_recvd() -> None:
@@ -70,9 +67,9 @@ def no_data_recvd() -> None:
     Art by ChatGPT
     """
     basic_box_with_text(
-        ['NO DATA RECEIVED BY SERVER'],
-        TRY_AGAIN,
-    )
+                        [CM.NO_DATA_RECVD_BOX],
+                        [*CM.TRY_AGAIN]
+                       )
 
 
 def no_response() -> None:
@@ -82,9 +79,9 @@ def no_response() -> None:
     art by ChatGPT, formatting by me
     """
     basic_box_with_text(
-        ['NO RESPONSE FROM DEEPWELL'],
-        TRY_AGAIN,
-    )
+                        [CM.NO_RESPONSE_BOX],
+                        [*CM.TRY_AGAIN]
+                       )
 
 
 def created_f(f_type: str, f_id: int) -> None:
@@ -94,6 +91,10 @@ def created_f(f_type: str, f_id: int) -> None:
     art by ChatGPT
     """
     basic_box_with_text(
-        ['FILE CREATED SUCCESSFULLY'],
-        [f'{f_type.upper()}-{f_id:03d} INITIALIZED'],
-    )
+                        [CM.FILE_CREATED_BOX],
+                        [
+                         CM.FILE_CREATED.format(
+                            file_ref=f'{f_type.upper()}-{f_id:03d}'
+                         )
+                        ]
+                       )

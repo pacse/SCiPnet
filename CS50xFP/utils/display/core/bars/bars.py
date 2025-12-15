@@ -11,7 +11,7 @@ Contains
 
 
 from .template import BarTemplate
-from ...config import CLEAR_LVL_COLOURS
+from ...config import Styles
 from ....sql.null_processors import ProcessedData as PD
 
 from rich.console import Console
@@ -25,9 +25,12 @@ def acs_bar(
     """
     Displays an ACS-style bar for provided SCP info
 
-    Args:
-        info (ProcessedData.SCP): SCP info to display
-        console (Console | None): Console to print to
+    Parameters
+    ----------
+    info : ProcessedData.SCP
+        SCP info to display
+    console : Console | None, default=None
+        Console to print to
     """
 
     # init base render class
@@ -41,7 +44,7 @@ def acs_bar(
                           (info.id_str, None),
                           (info.name_str, None),
                           (info.clear_lvl_str,
-                           CLEAR_LVL_COLOURS[info.clear_lvl_id])
+                           Styles.CLEAR_LVL[info.clear_lvl_id])
                         ])
 
     base._render_sep('lt')
@@ -75,9 +78,12 @@ def mtf_bar(
            ) -> None:
     """
     Displays a bar for provided MTF info
-    Args:
-        info (ProcessedData.MTF): MTF info to display
-        console (Console | None): Console to print to
+    Parameters
+    ----------
+    info : ProcessedData.MTF
+        MTF info to display
+    console : Console | None, default=None
+        Console to print to
     """
 
     # init base render class
@@ -109,10 +115,15 @@ def site_bar(
            ) -> None:
     """
     Displays a bar for provided Site info
-    Args:
-        info (ProcessedData.Site): Site info to display
-        loc (str): Location of the site
-        console (Console | None): Console to print to
+
+    Parameters
+    ----------
+    info : ProcessedData.Site
+        Site info to display
+    loc : str
+        Site location string
+    console : Console | None, default=None
+        Console to print to
     """
 
     # init base render class
@@ -139,9 +150,13 @@ def user_bar(
             ) -> None:
     """
     Displays a bar for provided User info
-    Args:
-        info (ProcessedData.User): User info to display
-        console (Console | None): Console to print to
+
+    Parameters
+    ----------
+    info : ProcessedData.User
+        User info to display
+    console : Console | None, default=None
+        Console to print to
     """
 
     # init base render class
@@ -157,7 +172,7 @@ def user_bar(
     base.render_lines([
                        (f'Assigned Site: {info.site}', None),
                        (f'Clearance Level: {info.clearance_str}',
-                        CLEAR_LVL_COLOURS[info.clearance_id])
+                        Styles.CLEAR_LVL[info.clearance_id])
                      ])
 
     base._render_sep('b')

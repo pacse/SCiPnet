@@ -10,9 +10,8 @@ Contains
 
 # === Imports ===
 
-from ...config import (BAR_WIDTH, LEFT_PADDING, OTHER_CONT_CLASS,
-                       PLACEHOLDER, SPECIAL_TEXTS, ACTIVE_TEXT,
-                       DIGIT_REGEX, QUOTED_REGEX)
+from ...config import Bars, Styles, FormattingDefaults as DF, \
+                     Formatting as F, Terminal as Terminal
 from ....sql.exceptions import FieldError
 
 from rich.console import Console
@@ -46,15 +45,15 @@ def default_formatting(string: str) -> Text:
     t = Text(string)
 
     # special cases
-    if string.strip() in SPECIAL_TEXTS:
-        t.stylize(OTHER_CONT_CLASS)
-    elif string.strip() == ACTIVE_TEXT:
+    if string.strip() in DF.SPECIAL_TEXTS:
+        t.stylize(Styles.OTHER_CONT_CLASS)
+    elif string.strip() == DF.ACTIVE_TEXT:
         t.stylize('green')
 
     # normal formatting
     else:
-        t.highlight_regex(DIGIT_REGEX, 'cyan bold')  # digit coloring
-        t.highlight_regex(QUOTED_REGEX, 'green')     # text coloring
+        t.highlight_regex(DF.Digit.REGEX, DF.Digit.STYLE)    # digit coloring
+        t.highlight_regex(DF.Quoted.REGEX, DF.Quoted.STYLE)  # text coloring
 
     return t
 
@@ -93,13 +92,13 @@ def _format_label_val_text(
     """
 
     # replace escaped colons
-    string = string.replace('\\:', PLACEHOLDER)
+    string = string.replace('\\:', F.PLACEHOLDER)
 
     # formatting only applies after the colon
     parts = string.split(':', 1)
 
     # restore escaped colons
-    parts = [p.replace(PLACEHOLDER, ':') for p in parts]
+    parts = [p.replace(F.PLACEHOLDER, ':') for p in parts]
 
     # check str length
     if len(parts) == 1:
@@ -208,7 +207,7 @@ def format_centered_text(
                          string: str,
                          side: Literal['l', 'r', 'c'],
                          style: str | None = None,
-                         content_width: int = BAR_WIDTH,
+                         content_width: int = Bars.TEXT_WIDTH,
                          right_sep: Literal['║', ''] = '║'
                         ) -> tuple[str, Literal[''] | Text | str,
                                    Text | str, str, Literal['║','']]:
@@ -255,7 +254,7 @@ def print_centered_line(console: Console,
                         string: str,
                         side: Literal['l', 'r', 'c'],
                         style: str | None = None,
-                        content_width: int = BAR_WIDTH,
+                        content_width: int = Bars.TEXT_WIDTH,
                        ) -> None:
     """
     Renders a formatted centered line to the console
@@ -308,7 +307,7 @@ def print_piped_line(console: Console,
                      string: str,
                      side: Literal['l', 'r', 'c'],
                      style: str | None = None,
-                     content_width: int = BAR_WIDTH,
+                     content_width: int = Bars.TEXT_WIDTH,
                      cols: Literal[2, 3] = 2
                     ) -> None:
     """
@@ -329,7 +328,7 @@ def print_piped_line(console: Console,
     style : str or None, optional
         string to use for text styling.
         If None, uses default styling.
-    content_width : int, default=BAR_WIDTH
+    content_width : int, default=Bars.TEXT_WIDTH
         Width of the line content area
     cols : {2, 3}, default=2
         Number of columns in the bar:
@@ -357,7 +356,7 @@ def print_piped_line(console: Console,
     left_sep, right_sep = _get_pipe_seps(cols, side)
 
     if side == 'l':
-        left_sep = f'{LEFT_PADDING}{left_sep}'
+        left_sep = f'{Terminal.LEFT_PADDING}{left_sep}'
 
     console.print(
                   left_sep,

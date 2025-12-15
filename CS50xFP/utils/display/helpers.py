@@ -9,7 +9,7 @@ Contains
 - timestamp()
 """
 
-from .config import SIZE
+from .config import Terminal
 
 from os import name, system
 from datetime import datetime
@@ -20,6 +20,7 @@ def printc(
            string: str,
            end: str = '\n',
            flush: bool = False
+           overwrite: bool = False
           ) -> None:
     """
     Prints `string` centered to the terminal size
@@ -48,6 +49,10 @@ def printc(
     # print
     print(f'{string:^{SIZE}}', end=end, flush=flush)
 
+    if overwrite:
+        print(f'\r{string:^{Terminal.SIZE}}', end=end, flush=flush)
+    else:
+        print(f'{string:^{Terminal.SIZE}}', end=end, flush=flush)
 
 def print_lines(
                 lines: list[str]

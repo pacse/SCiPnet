@@ -6,10 +6,9 @@ from rich.console import Console
 from typing import Literal
 
 from .lines import print_piped_line, format_centered_text as fc_text
-from ...config import MIN_TERM_WIDTH, LEFT_PADDING, CONT_CLASS_COLOURS, \
-                      ACS_TOP_BAR_WIDTH as ACS_WIDTH
-
+from ...config import Bars, Styles, Terminal as Terminal
 from ....sql.exceptions import FieldError
+
 
 
 class BarTemplate:
@@ -22,7 +21,7 @@ class BarTemplate:
         Console to print to
     has_center_column : bool
         does the bar has a center column
-    width : int
+    width : int, default=General.MIN_TERM_WIDTH
         Total width of the bar
     triple_top : bool
         whether or not to use the ACS/MTF top bar style
@@ -36,7 +35,7 @@ class BarTemplate:
     def __init__(self,
                  console: Console | None = None,
                  has_center_column: bool = False, # unused, but maybe useful again later
-                 width: int = MIN_TERM_WIDTH,
+                 width: int = Terminal.MIN_TERM_WIDTH,
                  triple_top: bool = False,
                  double_sep_top: bool = False
                 ) -> None:
@@ -80,8 +79,8 @@ class BarTemplate:
         # === Handle column stuff ===
 
         if triple_top: # ACS & MTF bars
-            l_r    = '═' * ACS_WIDTH[0]              # left & right seps
-            center = '═' * ((ACS_WIDTH[1] - 2) // 2) # account for pipes
+            l_r    = '═' * Bars.TOP_SECTIONS[0]              # left & right seps
+            center = '═' * ((Bars.TOP_SECTIONS[1] - 2) // 2) # account for pipes
 
             if self.double_sep_top:
                 self.sep = {
@@ -123,9 +122,10 @@ class BarTemplate:
             pos ('t', 'lt', 'm', 'b'): Position of separator
         """
         try:
-            self.console.print(f'{LEFT_PADDING}{self.sep[pos]}')
+            self.console.print(f'{Terminal.LEFT_PADDING}{self.sep[pos]}')
         except KeyError:
             raise FieldError('pos', pos, "'t', 'lt', 'm', or 'b'")
+
 
     def _gen_classification_args(self,
                                  classification_name: str,
@@ -152,7 +152,9 @@ class BarTemplate:
         ('Containment Class: Euclid', CONT_CLASS_COLOURS['Euclid'])
         """
         return (f'{classification_name} Class: {classification_str}',
-                CONT_CLASS_COLOURS[classification_str])
+                Styles.CONT_CLASS[classification_str])
+
+
 
     # === Main Methods ===
 
@@ -195,18 +197,18 @@ class BarTemplate:
 
         if not self.triple_top:
             self.console.print(
-                LEFT_PADDING, "║",
+                Terminal.LEFT_PADDING, "║",
                 *fc_text(t_s[0][0], 'c', t_s[0][1], self.width),
                 sep=''
             )
 
         else:
             self.console.print(
-                LEFT_PADDING, '║',
+                Terminal.LEFT_PADDING, '║',
 
-                *fc_text(t_s[0][0], 'l', t_s[0][1], ACS_WIDTH[0]),
-                *fc_text(t_s[1][0], 'c', t_s[1][1], ACS_WIDTH[1]),
-                *fc_text(t_s[2][0], 'r', t_s[2][1], ACS_WIDTH[2]),
+                *fc_text(t_s[0][0], 'l', t_s[0][1], Bars.TOP_SECTIONS[0]),
+                *fc_text(t_s[1][0], 'c', t_s[1][1], Bars.TOP_SECTIONS[1]),
+                *fc_text(t_s[2][0], 'r', t_s[2][1], Bars.TOP_SECTIONS[2]),
 
                 sep=''
             )

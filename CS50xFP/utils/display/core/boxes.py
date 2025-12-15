@@ -8,7 +8,7 @@ Contains
 """
 
 from ..helpers import print_lines, printc, timestamp
-from ..config import DEFAULT_BOX_SIZE, MAX_BOX_SIZE
+from ..config import Boxes
 from ...sql.exceptions import FieldError
 
 
@@ -26,7 +26,7 @@ def basic_box(lines: list[str]) -> None:
     ------
     ValueError
         - If `lines` is empty
-        - If longest line is greater than `MAX_BOX_SIZE - 4` (-4 due to padding)
+        - If longest line is greater than `Boxes.MAX_TEXT_SIZE - Boxes.PADDING`
     TypeError
         If any element in `lines` is not a string
     """
@@ -39,13 +39,14 @@ def basic_box(lines: list[str]) -> None:
 
     # determine box width
     max_line_len = max(len(line) for line in lines)
-    box_width = max(DEFAULT_BOX_SIZE, max_line_len + 4)  # ensure 2 spaces padding each side
+    box_width = max(Boxes.DEF_TEXT_SIZE, max_line_len + Boxes.PADDING)  # ensure box has padding
 
     # check width
-    if box_width > MAX_BOX_SIZE:
+    if box_width > Boxes.MAX_TEXT_SIZE:
         raise FieldError(
             'line length', max_line_len,
-            f'longest line to be {MAX_BOX_SIZE - 4} chars or fewer'
+            ('longest line to be '
+             f'{Boxes.MAX_TEXT_SIZE - Boxes.PADDING} chars or fewer')
         )
 
     # === Render ===

@@ -8,17 +8,13 @@ Contains
 """
 
 from .helpers import clear, printc, print_lines
-from .config import SIZE, LOAD_RATE, HICCUP_PROBABILITY, \
-                    HICCUP_DELAY, SPECIAL_TITLES, AUTH_TYPES
+from .config import FancyLogin as FL, Logins, Load
 from ..__init__ import __version__
 from ..sql.models import Models
 
 from time import sleep
 from random import expovariate, uniform, choice
 
-# reused strs
-TOP_LINE = '/' * 120
-LOWER_TOP_LINE = '/' * 4 + ' ' * 112 + '/' * 4
 
 
 def sim_load() -> None:
@@ -36,8 +32,7 @@ def sim_load() -> None:
     ]
 
     for line, min_t, max_t in lines:
-        sleep(expovariate(LOAD_RATE))
-
+        sleep(expovariate(Load.LOAD_RATE))
         printc(line, end='', flush=True)
 
         for _ in range(3):
@@ -47,8 +42,8 @@ def sim_load() -> None:
             print(f'\r{line:^{SIZE}}', end='', flush=True)
 
         # occasional hiccup for 'lag'
-        if choice([True, False, False, False]):
-            sleep(uniform(*HICCUP_DELAY))
+        if uniform(0, 1) < Load.HICCUP_PROBABILITY:
+            sleep(uniform(*Load.HICCUP_DELAY))
 
     sleep(0.25)
     print('\n')
@@ -97,6 +92,9 @@ def startup() -> None:
 
 
 def _gen_login_lines(title: str) -> list[str]:
+def _f_line(line: str) -> str:
+        """Helper to format a line for `_gen_login_lines()`"""
+        return f'{FL.L_R}{line:^FL.CONTENT_WIDTH}{FL.L_R}'
     """
     Generates lines to print based on user title
     """
@@ -112,6 +110,38 @@ def _gen_login_lines(title: str) -> list[str]:
 
     result = ['', TOP_LINE, LOWER_TOP_LINE]
 
+    # validation
+    if title not in Logins.PROFILES.keys():
+        valid_titles = [f'{t!r}' for t in Logins.PROFILES.keys()]
+
+        raise ValueError(f'Invalid title: {title!r}, '
+                          'expected one of: '
+                          f'{", ".join(valid_titles)}')
+
+    if not isinstance(name, str):
+        raise TypeError(f'expected `name` to be type str,'
+                        f' got {type(name).__name__}')
+    elif not name or name.isspace():
+        raise ValueError('name cannot be empty or whitespace')
+    elif '{' in name or '}' in name:
+        raise ValueError('name cannot contain "{" or "}"')
+
+    # get profile
+    prof = Logins.PROFILES[title]
+
+    # generate & return lines
+    return [
+            '', FL.TB_LINE, FL.SEP,
+            _f_line(f'<< {prof.Auth_Type} AUTHORIZATION VERIFIED >>'),
+            FL.SEP,
+            _f_line(f'CLEARANCE LEVEL: {prof.Clear_Type}'),
+            FL.SEP,
+            _f_line(prof.Welcome_Msg.format(name=name)),
+            _f_line(prof.Logging_Msg),
+            FL.SEP,
+            _f_line(f'SYSTEM STATUS: {prof.Sys_Status_Msg}'),
+            FL.SEP, FL.TB_LINE, ''
+           ]
 
     return result
 
@@ -177,6 +207,8 @@ def login(usr: Models.User) -> None:
             reused2,
             '',
         ]
+    if usr.title.name in Logins.PROFILES.keys():
+        lines = _gen_login_lines(usr.title.name, usr.name)
 
     else:
         lines = [
