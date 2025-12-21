@@ -6,8 +6,8 @@ from rich.console import Console
 from typing import Literal
 
 from .lines import print_piped_line, format_centered_text as fc_text
-from ...config import Bars, Styles, Terminal as Terminal
-from ....sql.exceptions import FieldError
+from ....general.display_config import Bars, Styles, Terminal as Terminal
+from ....general.exceptions import FieldError
 
 
 

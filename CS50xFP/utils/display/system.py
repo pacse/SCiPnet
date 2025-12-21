@@ -8,7 +8,7 @@ Contains
 """
 
 from .helpers import clear, printc, print_lines
-from .config import FancyLogin as FL, Logins, Load
+from ..general.display_config import FancyLogin as FL, Logins, Load
 from ..__init__ import __version__
 from ..sql.models import Models
 

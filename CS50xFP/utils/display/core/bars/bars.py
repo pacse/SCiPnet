@@ -11,8 +11,8 @@ Contains
 
 
 from .template import BarTemplate
-from ...config import Styles
 from ....sql.null_processors import ProcessedData as PD
+from ....general.display_config import Styles
 
 from rich.console import Console
 

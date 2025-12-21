@@ -7,7 +7,7 @@ Display functions related to file access
 """
 
 from .core.boxes import basic_box_with_text
-from .config import AccessMessages as AM
+from ..general.display_config import AccessMessages as AM
 from .helpers import check_type_and_empty_str
 
 

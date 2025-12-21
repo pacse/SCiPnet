@@ -3,7 +3,7 @@ Display functions related to file creation
 """
 
 from .core.boxes import basic_box_with_text
-from .config import CreateMessages as CM
+from ..general.display_config import CreateMessages as CM
 from .helpers import check_type_and_empty_str
 
 

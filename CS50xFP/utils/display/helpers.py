@@ -14,7 +14,7 @@ Contains
 - timestamp()
 """
 
-from .config import Terminal
+from ..general.display_config import Terminal
 
 from os import name, system
 from datetime import datetime

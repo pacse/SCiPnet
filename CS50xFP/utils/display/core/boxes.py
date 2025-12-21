@@ -8,8 +8,8 @@ Contains
 """
 
 from ..helpers import print_lines, printc, timestamp
-from ..config import Boxes
-from ...sql.exceptions import FieldError
+from ...general.display_config import Boxes
+from ...general.exceptions import FieldError
 
 
 

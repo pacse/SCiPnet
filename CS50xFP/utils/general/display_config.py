@@ -100,6 +100,7 @@ class Styles:
 
     keys are containment classes
     (eg, CONT_CLASS_COLOURS['Safe'] is used for Safe class)
+    If a class is not in the keys, OTHER_CONT_CLASS is used
     """
 
 
@@ -173,7 +174,7 @@ class Bars:
     - TEXT_WIDTH
     """
 
-    TOP_SECTIONS = [32, 54, 32]
+    TOP_SECTIONS = [32, 52, 32]
     """Width of text areas of the top bar (left, center, right)"""
 
     TEXT_WIDTH = 58
@@ -238,12 +239,14 @@ class Terminal:
     SIZE: int
     """Terminal width in columns, adjusted to be even"""
 
-    LEFT_PADDING: int
+    LEFT_PADDING: str
     """Spaces to center 120 char content in terminal"""
 
 # initialize SIZE and LEFT_PADDING
 Terminal.SIZE = Terminal._get_term_width()
 Terminal._validate_term_width(Terminal.SIZE)
+Terminal.LEFT_PADDING = ' ' * ((Terminal.SIZE - Terminal.MIN_TERM_WIDTH) // 2)
+
 
 class Load:
     """

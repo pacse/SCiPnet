@@ -10,9 +10,9 @@ Contains
 
 # === Imports ===
 
-from ...config import Bars, Styles, FormattingDefaults as DF, \
+from ....general.display_config import Bars, Styles, FormattingDefaults as DF, \
                      Formatting as F, Terminal as Terminal
-from ....sql.exceptions import FieldError
+from ....general.exceptions import FieldError
 
 from rich.console import Console
 from rich.text import Text

@@ -1,6 +1,6 @@
 """
 All display related functionality
 """
-from . import config
+from ..general import display_config
 from . import helpers
 from . import system
