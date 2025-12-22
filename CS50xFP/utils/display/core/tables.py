@@ -3,21 +3,21 @@ Functions to render tables from pydantic models
 
 Contains
 --------
-- print_table_audit_logs: Prints a table of audit logs
-- print_table_mtfs: Prints a table of mtfs
-- print_table_scps: Prints a table of scps
-- print_table_users: Prints a table of users
+- print_table_audit_logs
+- print_table_mtfs
+- print_table_scps
+- print_table_users
 """
 
-from ...sql import models as Models
 from typing import Callable, Type, TypeVar
 
 from tabulate import tabulate
-from typing import Callable, Type, TypeVar
 
 from ...sql.transformers import Models
 
 T = TypeVar('T')
+
+
 
 # === Helpers ===
 
@@ -29,7 +29,7 @@ TABLE_CHAR_REPLACEMENTS = {
     '╤': '╦'
 }
 
-def replace_chars(text: str) -> str:
+def _replace_chars(text: str) -> str:
     """
     Replaces table characters in `text` according to
     `TABLE_CHAR_REPLACEMENTS`
@@ -48,6 +48,10 @@ def replace_chars(text: str) -> str:
         text = text.replace(old_char, new_char)
     return text
 
+def _f_user_name(usr: Models.User) -> str:
+    """Returns a user's title & name as a formatted string"""
+    return f'{usr.title.name} {usr.name}'
+
 
 def print_table(data: list[dict[str, str]]) -> None:
     """
@@ -56,7 +60,7 @@ def print_table(data: list[dict[str, str]]) -> None:
     Parameters
     ----------
     data : list[dict[str,str]]
-        The data to be displayed in table format
+        The data to be displayed
 
     Raises
     ------
@@ -89,57 +93,35 @@ def print_table(data: list[dict[str, str]]) -> None:
                         )
 
     # format table
-    table_str = replace_chars(table_str).split('\n')
+    table_str = _replace_chars(table_str).split('\n')
 
     # print
     for line in table_str:
         print(line)
 
 
-# data formatters (not all model data is shown)
+
+# === Data Formatters ===
+
 def _format_user(usr: Models.User) -> dict[str, str]:
     return {
             'ID': f'{usr.id:03d}',
-            'Name': f'{usr.title.name} {usr.name}',
-            'Clearance': usr.clearance_lvl.name,
-            'MTF Operative': 'Yes' if usr.mtf else 'No',
-            'Status': 'Active' if usr.is_active else 'Inactive'
+            'Name': _f_user_name(usr), # .display_name includes ID
+            'Clearance': usr.display_clearance,
+            'MTF Operative': 'Yes' if usr.mtf_id else 'No',
+            'Status': usr.display_active
            }
-
 
 def _format_scp(scp: Models.SCP) -> dict[str, str]:
-    if scp.secondary_class:
-        scnd_clss = scp.secondary_class.name
-    else:
-        scnd_clss = 'None'
-
-    if scp.risk_class:
-        risk_clss = scp.risk_class.name
-    else:
-        risk_clss = '[DATA EXPUNGED]'
-
-    if scp.disruption_class:
-        disruption_clss = scp.disruption_class.name
-    else:
-        disruption_clss = '[DATA EXPUNGED]'
-
-    if scp.mtf:
-        mtf_name = (f'{scp.mtf.name} '
-                    f'{scp.mtf.nickname!r}'
-                    f'(ID: {scp.mtf.id:03d})')
-    else:
-        mtf_name = 'None'
-
     return {
-            'ID': f'SCP-{scp.id:03d}',
-            'Classification Level': scp.clearance_lvl.name,
-            'Containment Class': f'{scp.containment_class.name}',
-            'Secondary Class': scnd_clss,
-            'Risk Class': risk_clss,
-            'Disruption Class': disruption_clss,
-            'Assigned MTF': mtf_name,
+            'ID': scp.display_id,
+            'Classification Level': scp.display_clearance,
+            'Containment Class': scp.display_containment,
+            'Secondary Class': scp.display_secondary,
+            'Risk Class': scp.display_risk,
+            'Disruption Class': scp.display_disruption,
+            'Assigned MTF': scp.display_mtf,
            }
-
 
 def _format_mtf(mtf: Models.MTF) -> dict[str, str]:
     return {
@@ -148,11 +130,10 @@ def _format_mtf(mtf: Models.MTF) -> dict[str, str]:
             'Active': 'Yes' if mtf.active else 'No',
            }
 
-
 def _format_audit_log(log: Models.AuditLog) -> dict[str, str]:
     return {
             'User ID': f'{log.user.id:03d}',
-            'User Name': f'{log.user.name}',
+            'User Name': _f_user_name(log.user),
             'IP Address': str(log.user_ip),
             'Action': log.action,
             'Status': 'Success' if log.status else 'Failure',
@@ -169,7 +150,10 @@ def _print_generic_table(
 
     **NOT TO BE IMPORTED OR USED OUTSIDE `tables.py`**
     """
-    # valdation
+    # validation
+    if not data:
+        raise ValueError('data must contain at least one entry')
+
     if not all(isinstance(entry, data_type) for entry in data):
         raise TypeError(f'all data entries must be {data_type.__name__}s')
 
@@ -182,16 +166,89 @@ def _print_generic_table(
 # === Main functions ===
 
 def print_table_audit_logs(data: list[Models.AuditLog]) -> None:
+    """
+    Prints a table of audit logs
+
+    Parameters
+    ----------
+    data : list[Models.AuditLog]
+        The audit logs to be displayed
+
+    Raises
+    ------
+    ValueError
+        If `data` is empty
+    TypeError
+        If any element in `data` is not an AuditLog
+
+    """
     _print_generic_table(Models.AuditLog, data, _format_audit_log)
 
-
 def print_table_mtfs(data: list[Models.MTF]) -> None:
+    """
+    Prints a table of MTFs
+
+    Parameters
+    ----------
+    data : list[Models.MTF]
+        The MTFs to be displayed
+
+    Raises
+    ------
+    ValueError
+        If `data` is empty
+    TypeError
+        If any element in `data` is not a MTF
+
+    """
     _print_generic_table(Models.MTF, data, _format_mtf)
 
-
 def print_table_scps(data: list[Models.SCP]) -> None:
+    """
+    Prints a table of SCPs
+
+    Parameters
+    ----------
+    data : list[Models.SCP]
+        The SCPs to be displayed
+
+    Raises
+    ------
+    ValueError
+        If `data` is empty
+    TypeError
+        If any element in `data` is not a SCP
+
+    """
     _print_generic_table(Models.SCP, data, _format_scp)
 
-
 def print_table_users(data: list[Models.User]) -> None:
+    """
+    Prints a table of users
+
+    Parameters
+    ----------
+    data : list[Models.User]
+        The users to be displayed
+
+    Raises
+    ------
+    ValueError
+        If `data` is empty
+    TypeError
+        If any element in `data` is not a User
+
+    """
+
     _print_generic_table(Models.User, data, _format_user)
+
+
+
+# === Exports ===
+
+__all__ = [
+           'print_table_audit_logs',
+           'print_table_mtfs',
+           'print_table_scps',
+           'print_table_users'
+          ]
