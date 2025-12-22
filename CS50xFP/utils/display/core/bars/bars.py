@@ -34,8 +34,16 @@ def acs_bar(
         Console to print to
     """
 
-    # init base render class
+    # validation
+    if not isinstance(info, Models.SCP):
+        raise TypeError('info must be an instance of Models.SCP')
+    if not isinstance(console, (Console, type(None))):
+        raise TypeError('console must be an instance of Console or None')
+
+    # inits
     base = BarTemplate(console, triple_top=True)
+    colours = get_scp_colours(info)
+
 
     # === Render ===
 
@@ -85,6 +93,12 @@ def mtf_bar(
         Console to print to
     """
 
+    # validation
+    if not isinstance(info, Models.MTF):
+        raise TypeError('info must be an instance of Models.MTF')
+    if not isinstance(console, (Console, type(None))):
+        raise TypeError('console must be an instance of Console or None')
+
     # init base render class
     base = BarTemplate(console, triple_top=True)
 
@@ -125,6 +139,12 @@ def site_bar(
         Console to print to
     """
 
+    # validation
+    if not isinstance(info, Models.Site):
+        raise TypeError('info must be an instance of Models.Site')
+    if not isinstance(console, (Console, type(None))):
+        raise TypeError('console must be an instance of Console or None')
+
     # init base render class
     base = BarTemplate(console)
 
@@ -158,8 +178,14 @@ def user_bar(
         Console to print to
     """
 
+    # validation
+    if not isinstance(info, Models.User):
+        raise TypeError('info must be an instance of Models.User')
+    if not isinstance(console, (Console, type(None))):
+        raise TypeError('console must be an instance of Console or None')
+
     # init base render class
-    base = BarTemplate(console)
+    base = BarTemplate(console, has_center_column=True)
 
     # === Render ===
     base._render_sep('t')
