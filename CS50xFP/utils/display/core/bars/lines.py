@@ -52,8 +52,8 @@ def default_formatting(string: str) -> Text:
 
     # normal formatting
     else:
-        t.highlight_regex(DF.Digit.REGEX, DF.Digit.STYLE)    # digit coloring
-        t.highlight_regex(DF.Quoted.REGEX, DF.Quoted.STYLE)  # text coloring
+        t.highlight_regex(DF.DIGIT_REGEX, DF.DIGIT_STYLE)    # digit coloring
+        t.highlight_regex(DF.QUOTED_REGEX, DF.QUOTED_STYLE)  # text coloring
 
     return t
 
