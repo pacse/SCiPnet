@@ -16,9 +16,8 @@ from rich.console import Console
 from .core.bars import acs_bar, site_bar, mtf_bar, user_bar
 from .core.tables import print_table_users, print_table_mtfs, \
                          print_table_scps
-from ..sql.models import Models
 from .helpers import print_md, print_md_title, check_type_and_empty_str
-from ..sql.null_processors import ProcessedData as PD
+from ..sql.transformers import Models
 
 
 def _display_additional_files(
@@ -44,15 +43,7 @@ def _display_additional_files(
         - If any file name or content in `additional` is an empty string
     """
 
-    # validation
-    if not isinstance(additional, dict):
-        raise TypeError('`additional` must be a dict[str, str]')
-    elif not all(isinstance(k, str) and isinstance(v, str)
-                 for k, v in additional.items()):
-        raise TypeError('All keys and values in `additional` must be strings')
-
-    if not isinstance(console, Console):
-        raise TypeError('`console` must be a rich Console instance')
+    # validation happens upstream
 
 
     # logic
@@ -96,7 +87,7 @@ def _display_additional_files(
 
 
 def display_scp(
-                info: PD.SCP,
+                info: Models.SCP,
                 desc: str,
                 cps: str,
                 addenda: dict[str, str],
@@ -107,7 +98,7 @@ def display_scp(
 
     Parameters
     ----------
-    info : ProcessedData.SCP
+    info : Models.SCP
         SCP info to display
     desc : str
         SCP description to display
@@ -121,7 +112,7 @@ def display_scp(
     Raises
     ------
     TypeError
-        - If `info` is not a ProcessedData.SCP instance
+        - If `info` is not a Models.SCP instance
         - If `desc` is not a string
         - If `cps` is not a string
         - If `addenda` is not a dict[str, str]
@@ -132,8 +123,8 @@ def display_scp(
     """
 
     # validation
-    if not isinstance(info, PD.SCP):
-        raise TypeError('`info` must be a ProcessedData.SCP instance')
+    if not isinstance(info, Models.SCP):
+        raise TypeError('`info` must be a Models.SCP instance')
 
     check_type_and_empty_str(desc, 'desc')
     check_type_and_empty_str(cps, 'cps')
@@ -162,7 +153,7 @@ def display_scp(
 
 
 def display_site(
-                 info: PD.Site,
+                 info: Models.Site,
                  site_loc: str,
                  site_desc: str,
                  staff: list[Models.User],
@@ -176,7 +167,7 @@ def display_site(
 
     Parameters
     ----------
-    info : ProcessedData.Site
+    info : Models.Site
         Site info to display
     site_loc : str
         Site location to display
@@ -198,7 +189,7 @@ def display_site(
     Raises
     ------
     TypeError
-        - If `info` is not a ProcessedData.Site instance
+        - If `info` is not a Models.Site instance
         - If `site_loc` is not a string
         - If `site_desc` is not a string
         - If `additional` is not a dict[str, str]
@@ -209,8 +200,8 @@ def display_site(
     """
 
     # validation
-    if not isinstance(info, PD.Site):
-        raise TypeError('`info` must be a ProcessedData.Site instance')
+    if not isinstance(info, Models.Site):
+        raise TypeError('`info` must be a Models.Site instance')
 
     check_type_and_empty_str(site_loc, 'site_loc')
     check_type_and_empty_str(site_desc, 'site_desc')
@@ -246,7 +237,7 @@ def display_site(
 
 
 def display_mtf(
-                info: PD.MTF,
+                info: Models.MTF,
                 mission: str,
                 console: Console
                ) -> None:
@@ -255,7 +246,7 @@ def display_mtf(
 
     Parameters
     ----------
-    info : ProcessedData.MTF
+    info : Models.MTF
         MTF info to display
     mission : str
         MTF mission to display
@@ -265,7 +256,7 @@ def display_mtf(
     Raises
     ------
     TypeError
-        - If `info` is not a ProcessedData.MTF instance
+        - If `info` is not a Models.MTF instance
         - If `mission` is not a string
         - If `console` is not a rich Console instance
     ValueError
@@ -273,8 +264,8 @@ def display_mtf(
     """
 
     # validation
-    if not isinstance(info, PD.MTF):
-        raise TypeError('`info` must be a ProcessedData.MTF instance')
+    if not isinstance(info, Models.MTF):
+        raise TypeError('`info` must be a Models.MTF instance')
 
     check_type_and_empty_str(mission, 'mission')
 
@@ -292,13 +283,13 @@ def display_mtf(
     print()
 
 
-def display_user(info: PD.User, console: Console) -> None:
+def display_user(info: Models.User, console: Console) -> None:
     """
     Displays a User
 
     Parameters
     ----------
-    info : ProcessedData.User
+    info : Models.User
         User info to display
     console : Console
         Rich console to print to
@@ -306,13 +297,13 @@ def display_user(info: PD.User, console: Console) -> None:
     Raises
     ------
     TypeError
-        - If `info` is not a ProcessedData.User instance
+        - If `info` is not a Models.User instance
         - If `console` is not a rich Console instance
     """
 
     # validation
-    if not isinstance(info, PD.User):
-        raise TypeError('`info` must be a ProcessedData.User instance')
+    if not isinstance(info, Models.User):
+        raise TypeError('`info` must be a Models.User instance')
     if not isinstance(console, Console):
         raise TypeError('`console` must be a rich Console instance')
 

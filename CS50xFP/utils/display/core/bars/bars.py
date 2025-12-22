@@ -9,17 +9,18 @@ Contains
 - user_bar: Renders a User bar
 """
 
-
 from .template import BarTemplate
-from ....sql.null_processors import ProcessedData as PD
 from ....general.display_config import Styles
+from ....sql.transformers import Models, get_scp_colours
 
 from rich.console import Console
+
+
 
 # === Bar Implementations ===
 
 def acs_bar(
-            info: PD.SCP,
+            info: Models.SCP,
             console: Console | None = None
            ) -> None:
     """
@@ -27,7 +28,7 @@ def acs_bar(
 
     Parameters
     ----------
-    info : ProcessedData.SCP
+    info : Models.SCP
         SCP info to display
     console : Console | None, default=None
         Console to print to
@@ -41,46 +42,44 @@ def acs_bar(
     base._render_sep('t')
 
     base.render_top_line([
-                          (info.id_str, None),
-                          (info.name_str, None),
-                          (info.clear_lvl_str,
-                           Styles.CLEAR_LVL[info.clear_lvl_id])
+                          (info.display_id, None),
+                          (info.display_name, None),
+                          (info.display_clearance,
+                           colours.clear_lvl)
                         ])
 
     base._render_sep('lt')
 
-    base.render_lines(
-                      [
-                       base._gen_classification_args('Containment',
-                                                     info.cnt_class),
-                       (f'Disruption Class: {info.disrupt_class}',
-                        info.disrupt_class_hex),
-                       base._gen_classification_args('Secondary',
-                                                     info.scnd_class),
-                       (f'Risk Class: {info.risk_class}',
-                        info.risk_class_hex)
-                      ],
-    )
+    base.render_lines([
+                       (f'Containment Class: {info.display_containment}',
+                        colours.cont_class),
+                       (f'Disruption Class: {info.display_disruption}',
+                        colours.disrupt_class),
+                       (f'Secondary Class: {info.display_secondary}',
+                        colours.scnd_class),
+                       (f'Risk Class: {info.display_risk}',
+                        colours.risk_class)
+                     ])
 
     base._render_sep('m')
 
     base.render_lines([
-                       (f'Site Responsible: {info.site_resp}', None),
-                       (f'Assigned MTF: {info.mtf_str}', None)
+                       (f'Assigned Site: {info.display_site}', None),
+                       (f'Assigned MTF: {info.display_mtf}', None),
                      ])
 
     base._render_sep('b')
 
 
 def mtf_bar(
-            info: PD.MTF,
+            info: Models.MTF,
             console: Console | None = None
            ) -> None:
     """
     Displays a bar for provided MTF info
     Parameters
     ----------
-    info : ProcessedData.MTF
+    info : Models.MTF
         MTF info to display
     console : Console | None, default=None
         Console to print to
@@ -93,23 +92,23 @@ def mtf_bar(
     base._render_sep('t')
 
     base.render_top_line([
-                          (info.name_str, None),
-                          (info.nickname, None),
-                          (info.active, None)
+                          (info.display_name, None),
+                          (info.display_nickname, None),
+                          (info.display_active, None)
                         ])
 
     base._render_sep('lt')
 
     base.render_lines([
-                       (f'Assigned Site: {info.site}', None),
-                       (f'Leader: {info.leader_str}', None)
+                       (f'Assigned Site: {info.display_site}', None),
+                       (f'Leader: {info.display_leader}', None)
                      ])
 
     base._render_sep('b')
 
 
 def site_bar(
-            info: PD.Site,
+            info: Models.Site,
             loc: str,
             console: Console | None = None
            ) -> None:
@@ -118,7 +117,7 @@ def site_bar(
 
     Parameters
     ----------
-    info : ProcessedData.Site
+    info : Models.Site
         Site info to display
     loc : str
         Site location string
@@ -132,12 +131,12 @@ def site_bar(
     # === Render ===
     base._render_sep('t')
 
-    base.render_top_line([(info.name_str, None)])
+    base.render_top_line([(info.display_name, None)])
 
     base._render_sep('m')
 
     base.render_lines([
-                       (f'Director: {info.director_str}', None),
+                       (f'Director: {info.display_director}', None),
                        (f'Location: {loc}', None)
                      ])
 
@@ -145,7 +144,7 @@ def site_bar(
 
 
 def user_bar(
-             info: PD.User,
+             info: Models.User,
              console: Console | None = None
             ) -> None:
     """
@@ -153,7 +152,7 @@ def user_bar(
 
     Parameters
     ----------
-    info : ProcessedData.User
+    info : Models.User
         User info to display
     console : Console | None, default=None
         Console to print to
@@ -165,14 +164,15 @@ def user_bar(
     # === Render ===
     base._render_sep('t')
 
-    base.render_top_line([(info.name_str, None)])
+    base.render_top_line([(info.display_name, None)])
 
     base._render_sep('m')
 
     base.render_lines([
-                       (f'Assigned Site: {info.site}', None),
-                       (f'Clearance Level: {info.clearance_str}',
-                        Styles.CLEAR_LVL[info.clearance_id])
+                       (f'Assigned Site: {info.display_site}', None),
+                       (info.display_active, None),
+                       (info.display_clearance,
+                        Styles.CLEAR_LVL[info.clearance_lvl.id]),
                      ])
 
     base._render_sep('b')

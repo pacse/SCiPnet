@@ -2,6 +2,7 @@
 Script to recreate the sql database
 usage: python quickstart.py [DB Name (optional)]
 """
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -9,7 +10,7 @@ from sys import argv
 import os
 
 # models to create tables
-from utils.sql.tables import Base, MainModels, HelperModels
+from utils.sql.schema import Base, MainModels, HelperModels
 
 from werkzeug.security import generate_password_hash
 

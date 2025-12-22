@@ -10,7 +10,7 @@ Contains
 from .helpers import clear, printc, print_lines
 from ..general.display_config import FancyLogin as FL, Logins, Load
 from ..__init__ import __version__
-from ..sql.models import Models
+from ..sql.transformers import Models
 
 from time import sleep
 from random import expovariate, uniform

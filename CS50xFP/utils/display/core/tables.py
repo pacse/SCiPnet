@@ -10,9 +10,12 @@ Contains
 """
 
 from ...sql import models as Models
+from typing import Callable, Type, TypeVar
 
 from tabulate import tabulate
 from typing import Callable, Type, TypeVar
+
+from ...sql.transformers import Models
 
 T = TypeVar('T')
 
