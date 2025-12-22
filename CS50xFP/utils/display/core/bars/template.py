@@ -29,25 +29,17 @@ class BarTemplate:
     double_sep_top : bool
         alternate render for ACS/MTF top row separator
         ** NOT IMPLEMENTED **
-
     """
 
     def __init__(self,
                  console: Console | None = None,
-                 has_center_column: bool = False, # unused, but maybe useful again later
+                 has_center_column: bool = False,
                  width: int = Terminal.MIN_TERM_WIDTH,
                  triple_top: bool = False,
                  double_sep_top: bool = False
                 ) -> None:
 
-        # === Init basic self vars ===
-        self.triple_top = triple_top                           # whether or not to use the ACS/MTF top bar style
-        self.width = width                                     # total width of bar
-        self.console = console if console else Console()       # Console to print to
-        self.cols = 3 if has_center_column else 2              # number of columns
-        self.double_sep_top = False                            # alternate render for ACS/MTF top row separator
-        self.sides: list[Literal['l', 'r', 'c']] = ['l', 'r']  # sides for piped lines
-
+        # === Validation ===
 
         if double_sep_top:
             raise NotImplementedError(
@@ -61,18 +53,48 @@ class BarTemplate:
 
 
 
+        # === Init basic self vars ===
+
+        self.triple_top = triple_top                              # whether or not to use the ACS/MTF top bar style
+        self.width = width - 2                                    # width of bar text area
+        self.console = console if console else Console()          # Console to print to
+        self.cols: Literal[2, 3] = 3 if has_center_column else 2  # number of columns
+        self.double_sep_top = False                               # alternate render for ACS/MTF top row separator
+        self.sides: list[Literal['l', 'c', 'r']]                  # sides to use for piped lines
+
+        if has_center_column:
+            self.sides = ['l', 'c', 'r']
+        else:
+            self.sides = ['l', 'r']
+
+
         # === Handle length calculation ===
-        col_len = (width - self.cols) // self.cols
+        pipe_space = 1 if self.cols == 3 else 2  # space taken by pipes in the bar
+        col_len = (self.width - pipe_space) // self.cols
+
 
         # validation
-        if (col_len * self.cols) + self.cols != width:
+        if (col_len * self.cols) + pipe_space != self.width:
             raise FieldError(
                              'width', width,
-                             f'a multiple of {self.cols} plus {self.cols}'
+                             f'a multiple of {self.cols} plus {pipe_space}'
                             )
 
-        self.length = col_len
+        self.lengths = [col_len] * self.cols  # lengths of each column
         rept = '═' * col_len
+
+        # adjust middle col to preserve total width
+        if self.cols == 3:
+            middle_col_len = col_len - 1
+
+
+            middle = '═' * middle_col_len
+            self.middle_col_len = middle_col_len
+            self.lengths[1] = middle_col_len
+
+        # make pylance happy
+        else:
+            middle = rept
 
 
 
@@ -84,21 +106,28 @@ class BarTemplate:
 
             if self.double_sep_top:
                 self.sep = {
-                            't':  f'╔{l_r}╗╔═{2 * center}═╗╔{l_r}╗',
+                            't':  f'╔{l_r}╗╔{center}══{center}╗╔{l_r}╗',
                             'lt': f'╠{l_r}╝╚{center}╗╔{center}╝╚{l_r}╣',
-                            'm':  f'╠{rept}╣╠{rept}╣',
-                            'b':  f'╚{rept}╝╚{rept}╝'
+                            'm':  f'╠{l_r}══{center}╣╠{l_r}══{center}╣',
+                            'b':  f'╚{l_r}══{center}╝╚{l_r}══{center}╝'
                            }
 
             else:
                 self.sep = {
-                            't':  f'╔{l_r}╦═{2 * center}═╦{l_r}╗',
+                            't':  f'╔{l_r}╦{center}══{center}╦{l_r}╗',
                             'lt': f'╠{l_r}╩{center}╗╔{center}╩{l_r}╣',
-                            'm':  f'╠{rept}╣╠{rept}╣',
-                            'b':  f'╚{rept}╝╚{rept}╝'
+                            'm':  f'╠{l_r}═{center}╣╠{l_r}═{center}╣',
+                            'b':  f'╚{l_r}═{center}╝╚{l_r}═{center}╝'
                            }
 
-        else: # Site & User bars
+        elif self.cols == 3: # User bars
+            self.sep = {
+                        't': f'╔{rept}═{middle}═{rept}╗',
+                        'm': f'╠{rept}╦{middle}╦{rept}╣',
+                        'b': f'╚{rept}╩{middle}╩{rept}╝'
+                       }
+
+        else: # Site bars
             self.sep = {
                         't': f'╔{rept}══{rept}╗',
                         'm': f'╠{rept}╗╔{rept}╣',
@@ -106,8 +135,6 @@ class BarTemplate:
                        }
 
 
-        # type annotations
-        self.cols: Literal[2, 3]
 
 
     # === Helper Method ===
@@ -118,41 +145,28 @@ class BarTemplate:
         """
         Renders a separator line
 
-        Args:
-            pos ('t', 'lt', 'm', 'b'): Position of separator
-        """
-        try:
-            self.console.print(f'{Terminal.LEFT_PADDING}{self.sep[pos]}')
-        except KeyError:
-            raise FieldError('pos', pos, "'t', 'lt', 'm', or 'b'")
-
-
-    def _gen_classification_args(self,
-                                 classification_name: str,
-                                 classification_str: str
-                                 ) -> tuple[str, str]:
-        """
-        Generates arguments for classification display lines
-
         Parameters
         ----------
-        classification_name : str
-            Name of the classification
-        classification_str : str
-            Classification string
-
-        Returns
-        -------
-        tuple[str, str]
-            Arguments for classification display lines
-
-        Example
-        -------
-        >>> _gen_classification_args('Containment', 'Euclid')
-        ('Containment Class: Euclid', CONT_CLASS_COLOURS['Euclid'])
+        pos : {'t', 'lt', 'm', 'b'}
+            Position of separator
+            (Can not be 'lt' if `self.triple_top = False`)
         """
-        return (f'{classification_name} Class: {classification_str}',
-                Styles.CONT_CLASS[classification_str])
+
+        # validation
+        if pos == 'lt' and not self.triple_top:
+            raise FieldError(
+                'pos', pos,
+                "'t', 'm', or 'b' ('lt' only valid for triple_top bars)"
+            )
+
+        if pos not in self.sep:
+            if self.triple_top:
+                raise FieldError('pos', pos, "'t', 'lt', 'm', or 'b'")
+            else:
+                raise FieldError('pos', pos, "'t', 'm', or 'b'")
+
+        # render
+        self.console.print(f'{Terminal.LEFT_PADDING}{self.sep[pos]}')
 
 
 
@@ -213,7 +227,6 @@ class BarTemplate:
                 sep=''
             )
 
-
     def render_lines(self,
                     text_styles: list[tuple[str, str | None]],
                    ) -> None:
@@ -243,11 +256,13 @@ class BarTemplate:
 
         # === Render ===
         for i in range(len(text_styles)):
+            tmp = i % len(self.sides)
+
             print_piped_line(
                              console=self.console,
                              string=text_styles[i][0],
-                             side=self.sides[i % len(self.sides)],
+                             side=self.sides[tmp],
                              style=text_styles[i][1],
-                             content_width=self.length,
+                             content_width=self.lengths[tmp],
                              cols=self.cols,
                             )
