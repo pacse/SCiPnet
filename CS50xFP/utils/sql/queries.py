@@ -8,40 +8,103 @@ Contains
 - log_event
 """
 
-from typing import TypeAlias, Any
+from typing import Any, Generator, TypeVar
+from ipaddress import ip_address
+from contextlib import contextmanager
 
 from sqlalchemy import select, func
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
-from ipaddress import ip_address
+from sqlalchemy.orm import Session
 
 from .core import db_session
-from .schema import MainModels, Base, validate_table
+from .schema import MainModels as ORMModels, ORMBase, validate_table
 from ..general.exceptions import TableNotFoundError, RecordNotFoundError, \
-                        ColumnNotFoundError, DatabaseError, \
-                        DatabaseSessionError, FieldError, ArgumentError
-from ..general.validation import _validate_field, _validate_str, _validate_int
+                        DatabaseError, DatabaseSessionError, field_error
+from ..general.validation import validate_field, validate_str, \
+                                 validate_int, validate_model_field
+
 
 
 # === Types ===
 
-ModelClass: TypeAlias = type[Base]
+T = TypeVar('T', bound=ORMBase) # Generic type for SQLAlchemy models
 
 
 
 # === Helpers ===
 
-def _get_table_name(model_class: ModelClass) -> str:
+def _get_table_name(model_class: type[ORMBase]) -> str:
     """
-    Returns a ModelClass's tablename
+    Returns a type[Base]'s tablename
     """
     return model_class.__tablename__
+
+
+@contextmanager
+def db_session_manager(
+                       model_class: type[ORMBase],
+                       fields: list[str] = []
+                      ) -> Generator[
+                                     tuple[str, Session, set[Any]],
+                                     None, None
+                                    ]:
+    """
+    Extends db_session to have basic validation
+
+    Parameters
+    ----------
+    model_class : type[Base]
+        The model class (table) to validate
+    fields : list[str] = []
+        list of field names to validate and return as model attributes
+
+    Yields
+    ------
+    tuple[str, Session, set[Any]]
+        - Table name
+        - SQLAlchemy session
+        - Set of model attributes (columns) corresponding to `fields`
+
+
+    Raises
+    ------
+    TableNotFoundError
+        If `model_class` does not correspond to a valid table
+    TypeError
+        If any field in `fields` is not a str
+    ValueError
+        If any field in `fields` is empty or whitespace-only
+    ColumnNotFoundError
+        If any field in `fields` does not exist in the table
+    DatabaseSessionError
+        If there was an error creating the session
+    """
+    t_name = _get_table_name(model_class)
+
+    if not validate_table(t_name):
+        raise TableNotFoundError(t_name)
+
+    attrs = []
+    for field in fields:
+        validate_model_field(model_class, field)
+        attrs.append(getattr(model_class, field))
+
+    # ensure unique fields
+    if len(attrs) != len(set(attrs)):
+        raise field_error(
+            'fields', fields,
+            'list of unique field names'
+        )
+
+    with db_session() as session:
+        yield t_name, session, set(attrs)
 
 
 
 # === Main funcs ===
 
 def get_field(
-              model_class: ModelClass,
+              model_class: type[ORMBase],
               return_field: str,
               filter_field: str,
               filter_value: Any,
@@ -53,7 +116,7 @@ def get_field(
 
     Parameters
     ----------
-    model_class : ModelClass
+    model_class : type[Base]
         The model class (table) to query
     return_field : str
         The field to return
@@ -84,50 +147,69 @@ def get_field(
     **Never pass raw user input**
     """
 
-    t_name = _get_table_name(model_class)
-
-    # validation
-    if not validate_table(t_name):
-        raise TableNotFoundError(t_name)
-
-    if not isinstance(return_field, str):
-        raise ArgumentError('return_field', return_field, 'str')
-    if not isinstance(filter_field, str):
-        raise ArgumentError('filter_field', filter_field, 'str')
-
-    if not hasattr(model_class, filter_field):
-        raise ColumnNotFoundError(t_name, filter_field)
-    if not hasattr(model_class, return_field):
-        raise ColumnNotFoundError(t_name, return_field)
-
-
-    # build & execute query
-    return_col = getattr(model_class, return_field)
-    filter_col = getattr(model_class, filter_field)
-
-    with db_session() as session:
-            result = session.scalar(
-                select(return_col).filter(filter_col == filter_value)
+    with db_session_manager(
+        model_class,
+        [return_field, filter_field]
+    ) as (
+        t_name,
+        session,
+        (return_col, filter_col)
+    ):
+        result = session.scalar(
+            select(return_col).filter(
+                filter_col == filter_value
             )
+        )
 
     # ensure we got something & return it
-    if result is None:
-        raise RecordNotFoundError(
-                                  filter_field,
-                                  filter_value,
-                                  t_name
-                                 )
-    return result
+    if result:
+        return result
+    raise RecordNotFoundError(filter_field, filter_value, t_name)
 
 
-def get_next_id(model_class: ModelClass) -> int:
+def get_model(
+              model_class: type[T],
+              model_id: int,
+             ) -> T:
+    """
+    Gets a full model (row) by ID
+
+    Parameters
+    ----------
+    model_class : type[Base]
+        The model class (table) to query
+    model_id : int
+        The ID of the model (row) to get
+
+    Returns
+    -------
+    Base
+        The model (row)
+
+    Raises
+    ------
+    TableNotFoundError
+        If `model_class` does not correspond to a valid table
+    RecordNotFoundError
+        If no record with `model.id = model_id` exists
+    """
+
+    with db_session_manager(model_class) as (t_name, session, _):
+        result = session.get(model_class, model_id)
+
+    if result:
+        return result
+    raise RecordNotFoundError('id', model_id, t_name)
+
+
+def get_next_id(model_class: type[ORMBase]) -> int:
     """
     Returns the next id in a table:
     COALESCE(MAX(id), 0) + 1
 
     Parameters
     ----------
-    model_class : ModelClass
+    model_class : type[Base]
         The model class (table) to get the next ID for
 
     Returns
@@ -143,26 +225,21 @@ def get_next_id(model_class: ModelClass) -> int:
         If there was an error executing the query
     """
 
-    t_name = _get_table_name(model_class)
-
-    # validation
-    if not validate_table(t_name):
-        raise TableNotFoundError(t_name)
-
-    # exec query
-    with db_session() as session:
-            result = session.scalar(select(
-                func.coalesce(func.max(model_class.id), 0) + 1
+    with db_session_manager(model_class) as (t_name, session, _):
+            result = session.scalar(
+                select(
+                    func.coalesce(
+                        func.max(model_class.id), 0
+                    ) + 1
             ))
 
     # check result to make type checker happy
-    if result is None:
-        raise DatabaseError(
-            f'Failed to get next ID for table {t_name}: '
-            'COALESCE(MAX(id), 0) + 1 returned None'
-        )
-
-    return result
+    if result:
+        return result
+    raise DatabaseError(
+        f'Failed to get next ID for table {t_name}: '
+        'COALESCE(MAX(id), 0) + 1 returned None'
+    )
 
 
 def log_event(
@@ -200,28 +277,28 @@ def log_event(
     """
 
     # validate inputs
-    _validate_int('user_id', user_id)
+    validate_int('user_id', user_id)
 
     for name, value in [
         ('user_ip', user_ip),
         ('action', action),
         ('details', details)
     ]:
-        _validate_str(name, value)
+        validate_str(name, value)
 
-    _validate_field('status', status, bool)
+    validate_field('status', status, bool)
 
     try:
         ip_address(user_ip)
     except ValueError as e:
-        raise FieldError(
+        raise field_error(
             'user_ip', user_ip,
             'valid IP address (IPv4 or IPv6)'
         ) from e
 
     # actual logic
     try:
-        row = MainModels.AuditLog(
+        row = ORMModels.AuditLog(
             user_id=user_id,
             user_ip=user_ip,
             action=action,
