@@ -20,6 +20,7 @@ Contains
 """
 
 from typing import Any
+from humanize import naturalsize as hsize
 
 # maybe useful later ¯\_(ツ)_/¯
 '''
@@ -79,9 +80,10 @@ class ColumnNotFoundError(DatabaseError):
         >>> f'Column {column_name!r} does not exist in table {table_name!r}.'
     """
     def __init__(self, column_name: str, table_name: str):
-        super().__init__((
+        super().__init__(
             f'Column {column_name!r} '
-            f'does not exist in table {table_name!r}.'))
+            f'does not exist in table {table_name!r}.'
+        )
 
 class RecordNotFoundError(DatabaseError):
     """
@@ -105,9 +107,10 @@ class RecordNotFoundError(DatabaseError):
                  lookup_value: Any,
                  table_name: str,
                 ):
-        super().__init__((
+        super().__init__(
             f'Record with {lookup_field!r} = {lookup_value!r}'
-            f' does not exist in table {table_name!r}.'))
+            f' does not exist in table {table_name!r}.'
+        )
 
 
 class DatabaseNotFoundError(DatabaseError):
@@ -135,6 +138,40 @@ class DatabaseSessionError(DatabaseError):
 
 
 
+# === Socket related exceptions ===
+
+class MaxSizeLimitError(Exception):
+    """
+    Raised when the message/data size exceeds maximum allowed size
+
+    Parameters
+    ----------
+    data_size : int
+        The size of the data/message in bytes
+    max_size : int
+        The maximum allowed size in bytes
+    use_data : bool
+        Whether to use 'Data' or 'Message' in the error message
+
+    Error Message
+    -------------
+        >>> f'{"Data" if use_data else "Message"}'
+        f' size ({hsize(data_size)}) exceeds'
+        f' maximum size ({hsize(max_size)})'
+    """
+    def __init__(self,
+                 data_size: int,
+                 max_size: int,
+                 use_data: bool = True
+                ):
+        label = 'Data' if use_data else 'Message'
+        super().__init__(
+            f'{label} size ({hsize(data_size)}) exceeds'
+            f' maximum size ({hsize(max_size)})'
+        )
+
+
+
 # === General exceptions ===
 
 def _gen_error_str(
@@ -153,10 +190,11 @@ def _gen_error_str(
     return f'Invalid {invalid}: {value!r} (expected {expected})'
 
 
-def FieldError(field: str,
-               field_val: Any,
-               expected: str
-              ) -> ValueError:
+def field_error(
+                field: str,
+                field_val: Any,
+                expected: str
+               ) -> ValueError:
     """
     A formatted ValueError
 
@@ -177,11 +215,11 @@ def FieldError(field: str,
                         field, field_val, expected
                       ))
 
-def ArgumentError(
-                  arg_name: str,
-                  arg_val: Any,
-                  expected_type: Any,
-                 ) -> TypeError:
+def arg_error(
+              arg_name: str,
+              arg_val: Any,
+              expected_type: Any,
+             ) -> TypeError:
     """
     A formatted TypeError
 
@@ -201,7 +239,26 @@ def ArgumentError(
             (expected {expected_type.__name__})'''
     """
     return TypeError(_gen_error_str(
-                        f'{arg_name} type',
+                        f'type of {arg_name}',
                         type(arg_val).__name__,
-                        expected_type.__name__
+                        f'{expected_type.__name__!r}'
                       ))
+
+
+__all__ = [
+           # SQLite related exceptions
+           'DatabaseError',
+           'TableNotFoundError',
+           'ColumnNotFoundError',
+           'RecordNotFoundError',
+           'DatabaseNotFoundError',
+           'DatabaseConnectionError',
+           'DatabaseSessionError',
+
+           # Socket related exceptions
+           'MaxSizeLimitError',
+
+           # General exceptions
+           'field_error',
+           'arg_error',
+]
