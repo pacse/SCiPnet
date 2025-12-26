@@ -5,7 +5,7 @@ import socket
 from werkzeug.security import generate_password_hash
 
 from .art import *
-from .socket import ADDR, send, recv
+from .socket.transport import ADDR, send, recv
 
 # for typedefing
 from rich.console import Console

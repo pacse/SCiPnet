@@ -4,56 +4,12 @@ Server side utility functions
 import os
 import socket
 from typing import cast, Any
-from pathlib import Path
-from werkzeug.security import check_password_hash
 
-from .sql.sql import db, User, SCP_Colours, SCP, log_event, get_id, next_id, get_name, get_nickname, get_colour, get_cc_colour
-from .socket import send, recv
+from .sql.queries import get_field, get_next_id, log_event
+from .socket.transport import send, recv
 
 # enable/disable debug messages
-DEBUG = False
 
-# valid file types (creatable/accessible)
-VALID_F_TYPES = [
-    "SCP",
-    "MTF",
-    "SITE",
-    "USER",
-]
-
-# path to deepwell
-M_DIR_PATH = Path(__file__).resolve().parent.parent
-DEEPWELL_PATH = M_DIR_PATH / "deepwell"
-
-def valid_f_type(check: str) -> bool:
-    if check in VALID_F_TYPES:
-        return True
-    else:
-        return False
-
-
-def auth_usr(id: int, password: str) -> tuple[bool, dict[str, Any] | None]:
-    # TODO: Validate
-    '''
-    Authenticates a user by querying the deepwell
-    '''
-    if DEBUG:
-        print(f"Authenticating user {id!r} with password: {password!r}")
-
-    # get id from database
-    row = db.execute("SELECT * FROM users WHERE id = ?", id)
-
-    # usr exists, check pw hash
-    if row and check_password_hash(row["password"], password):
-        # success
-        deepwell_data = row[0]
-        if DEBUG:
-            print(f"Sucess, returning: True, {row[0]}")
-        return True, row[0] # return True and info from deepwell
-    else: # failure
-        if DEBUG:
-            print("Falure, returning: False, None")
-        return False, None # return False and None
 
 
 def create(client: socket.socket, f_type: str, thread_id: int, usr: User) -> None:
@@ -90,7 +46,7 @@ def create(client: socket.socket, f_type: str, thread_id: int, usr: User) -> Non
     # get necessary info for file creation
     if f_type == "SCP":
         info = {}
-        info["id"] = next_id('scps')
+        info["id"] = get_next_id('scps')
         info["clearance_levels"] = db.execute("SELECT id, name FROM clearance_levels")
         info["containment_classes"] = db.execute("SELECT id, name FROM containment_classes")
         info["secondary_classes"] = db.execute("SELECT id, name FROM secondary_classes")
@@ -154,24 +110,24 @@ def create(client: socket.socket, f_type: str, thread_id: int, usr: User) -> Non
                 file = cast(dict[str, int | str], file)
 
                 # check key: value pairs
-                assert file["classification_level_id"] in range(1,next_id("clearance_levels"))
+                assert file["classification_level_id"] in range(1,get_next_id("clearance_levels"))
                 print("classification_level_id is valid")
-                assert file["containment_class_id"] in range(1,next_id("containment_classes"))
+                assert file["containment_class_id"] in range(1,get_next_id("containment_classes"))
                 print("containment_class_id is valid")
-                assert file["secondary_class_id"] in range(0,next_id("secondary_classes"))
+                assert file["secondary_class_id"] in range(0,get_next_id("secondary_classes"))
                 print("secondary_class_id is valid")
-                assert file["disruption_class_id"] in range(1, next_id("disruption_classes"))
+                assert file["disruption_class_id"] in range(1, get_next_id("disruption_classes"))
                 print("disruption_class_id is valid")
-                assert file["risk_class_id"] in range(1, next_id("risk_classes"))
+                assert file["risk_class_id"] in range(1, get_next_id("risk_classes"))
                 print("risk_class_id is valid")
-                assert file["site_responsible_id"] in range(0, next_id("sites"))
+                assert file["site_responsible_id"] in range(0, get_next_id("sites"))
                 print("site_responsible_id is valid")
 
                 # make atf 'name' it's corresponding id if str
                 if isinstance(file["atf_id"], str):
                     file["atf_id"] = get_id("mtfs", file["atf_id"])
 
-                assert file["atf_id"] in range(0, next_id("mtfs"))
+                assert file["atf_id"] in range(0, get_next_id("mtfs"))
                 print("atf_id is valid")
 
         elif f_type == "MTF":
@@ -186,7 +142,7 @@ def create(client: socket.socket, f_type: str, thread_id: int, usr: User) -> Non
             file = cast(dict[str, int | str], file)
 
             # check key:value pair
-            assert file["leader"] in range(1, next_id("users"))
+            assert file["leader"] in range(1, get_next_id("users"))
 
         elif f_type == "SITE":
             # check types and keys
@@ -201,7 +157,7 @@ def create(client: socket.socket, f_type: str, thread_id: int, usr: User) -> Non
             file = cast(dict[str, int | str], file)
 
             # check k:v pair
-            assert file["director"] in range(1, next_id("users"))
+            assert file["director"] in range(1, get_next_id("users"))
 
         elif f_type == "USER":
             # check types and keys
@@ -220,9 +176,9 @@ def create(client: socket.socket, f_type: str, thread_id: int, usr: User) -> Non
             file = cast(dict[str, int | str | None], file)
 
             # check k:v pairs
-            assert file["clearance_level_id"] in range(1, next_id("clearance_levels"))
-            assert file["title_id"] in range(1, next_id("titles"))
-            assert file["site_id"] in range(1, next_id("sites"))
+            assert file["clearance_level_id"] in range(1, get_next_id("clearance_levels"))
+            assert file["title_id"] in range(1, get_next_id("titles"))
+            assert file["site_id"] in range(1, get_next_id("sites"))
 
     except (AssertionError, KeyError, IndexError):
         send(client, "INVALID FILE DATA")
@@ -596,6 +552,8 @@ def handle_usr(client: socket.socket, ip: str, thread_id: int) -> None:
             client.close()
             return
 
+        if data['type']
+
         split_data: list[str | int] = data.split() # decode data
 
         # validate types
@@ -604,7 +562,7 @@ def handle_usr(client: socket.socket, ip: str, thread_id: int) -> None:
             split_data[1] = int(split_data[1])
             split_data[2] = str(split_data[2])
 
-        except ValueError:
+        except ValueError or IndexError:
             print(f"[THREAD {thread_id}] ERROR: Invalid auth request: {split_data}")
             send(client, False)
             client.close()
