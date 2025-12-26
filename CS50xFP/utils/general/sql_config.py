@@ -14,6 +14,10 @@ Contains
     - POOL_CONFIG
     - SQLITE_CONFIG
 
+- Other Config
+    - EXPUNGED
+    - NONE_STR
+
 Notes
 -----
 - Made primarily by Github Copilot
@@ -59,11 +63,6 @@ SQLITE_CONFIG = {
 }
 """SQLite specific configuration"""
 
-# namespace
-class Config:
-    POOL = POOL_CONFIG
-    SQLITE = SQLITE_CONFIG
-
 
 
 # === Other Config ===
@@ -73,9 +72,21 @@ NONE_STR = 'None'
 
 
 
-
-
 # === Exports ===
+
+# namespaces
+
+class Config:
+    POOL = POOL_CONFIG
+    SQLITE = SQLITE_CONFIG
+
+class Paths:
+    PROJECT_ROOT = PROJECT_ROOT
+    DEEPWELL_DIR = DEEPWELL_DIR
+    DB_PATH = DB_PATH
+    DB_URL = DB_URL
+
+
 __all__ = [
            # Paths
            'PROJECT_ROOT',
@@ -88,6 +99,7 @@ __all__ = [
            'POOL_CONFIG',
            'SQLITE_CONFIG',
 
-           # Namespace
-           'Config'
+           # Namespaces
+           'Config',
+           'Paths',
           ]
