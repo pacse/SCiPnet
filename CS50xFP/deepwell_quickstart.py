@@ -10,7 +10,7 @@ from sys import argv
 import os
 
 # models to create tables
-from utils.sql.schema import Base, MainModels, HelperModels
+from utils.sql.schema import ORMBase, MainModels, HelperModels
 
 from werkzeug.security import generate_password_hash
 
@@ -39,7 +39,7 @@ session = sessionmaker(bind=engine)()
 print(f'Creating new database (deepwell/{name}) . . .')
 
 # ==== create all tables ====
-Base.metadata.create_all(engine)
+ORMBase.metadata.create_all(engine)
 
 
 print(f'Adding initial data . . .')
@@ -55,7 +55,7 @@ for c_lvl in [
               'Level 4 - Secret',
               'Level 5 - Top Secret',
               'Level 6 - Cosmic Top Secret'
-            ]:
+             ]:
     session.add(
         HelperModels.ClearanceLvl(name=c_lvl)
         )
@@ -69,7 +69,7 @@ for c_clss in [
                'Decommissioned',
                'Uncontained',
                'Pending'
-            ]:
+              ]:
     session.add(
         HelperModels.ContainmentClass(name=c_clss)
         )
@@ -81,7 +81,7 @@ for d_clss in [
                'Level 3 - Keneq',
                'Level 4 - Ekhi',
                'Level 5 - Amida'
-            ]:
+              ]:
     session.add(
         HelperModels.DisruptionClass(name=d_clss)
         )
@@ -92,7 +92,7 @@ for r_clss in [
                'Level 3 - Warning',
                'Level 4 - Danger',
                'Level 5 - Critical'
-            ]:
+              ]:
     session.add(
         HelperModels.RiskClass(name=r_clss)
         )
@@ -106,7 +106,7 @@ for title in [
               'Mobile Task Force Operative',
               'Site Director',
               'O5 Council Member'
-            ]:
+             ]:
     session.add(
         HelperModels.Title(name=title)
         )
@@ -132,10 +132,10 @@ mtf_1 = MainModels.MTF(name='Gamma-94', nickname='Gramma\'s little helpers',
 mtf_2 = MainModels.MTF(name='Epsilon-6', nickname='Village Idiots',)
 mtf_3 = MainModels.MTF(name='Alpha-1', nickname='Red Right Hand')
 
-scp_1 = MainModels.SCP(id=49, clearance_lvl_id=6,
+scp_1 = MainModels.SCP(id=49, name='Plague Doctor', clearance_lvl_id=6,
                        containment_class_id=2, disruption_class_id=2,
                        risk_class_id=4)
-scp_2 = MainModels.SCP(id=2, clearance_lvl_id=2,
+scp_2 = MainModels.SCP(id=2, name='The "Living" Room', clearance_lvl_id=2,
                        containment_class_id=2, disruption_class_id=1,
                        risk_class_id=2)
 

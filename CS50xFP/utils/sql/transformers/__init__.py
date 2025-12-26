@@ -18,10 +18,11 @@ Contains
 - get_scp_colours
 """
 
-from .models import AuditLog, IDandName, MTF, SCP, SCPColours, Site, User, \
-                    get_scp_colours
+from .models import PydanticBase, AuditLog, IDandName, MTF, SCP, \
+                    SCPColours, Site, User, get_scp_colours
 
 
+# Define Models class BEFORE importing convert to avoid circular import
 class Models:
     AuditLog = AuditLog
     MTF = MTF
@@ -33,5 +34,14 @@ class Models:
     IDandName = IDandName
 
 
-__all__ = ['Models', 'get_scp_colours']
+# Import convert AFTER Models is defined to avoid circular import
+from .convert import orm_to_pydantic
+
+
+__all__ = [
+           'PydanticBase',
+           'orm_to_pydantic',
+           'Models',
+           'get_scp_colours'
+          ]
 

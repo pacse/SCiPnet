@@ -1,5 +1,5 @@
 """
-Config and shared files for the utils module
+Config and shared basic files for the utils module
 
 Contains
 --------

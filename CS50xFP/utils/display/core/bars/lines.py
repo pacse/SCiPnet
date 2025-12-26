@@ -12,7 +12,7 @@ Contains
 
 from ....general.display_config import Bars, Styles, FormattingDefaults as DF, \
                      Formatting as F, Terminal as Terminal
-from ....general.exceptions import FieldError
+from ....general.exceptions import field_error
 
 from rich.console import Console
 from rich.text import Text
@@ -162,14 +162,14 @@ def _calc_spacing(
 
     # input validation
     if side not in ['l', 'r', 'c']:
-        raise FieldError('side', side, "'l', 'r', or 'c'")
+        raise field_error('side', side, "'l', 'r', or 'c'")
 
 
     # calculate available space without escape chars
     available_space = content_width - len(string.replace('\\', ''))
 
     if available_space < 0:
-        raise FieldError(
+        raise field_error(
             'string', string,
             f'string to fit in content_width ({content_width})'
         )
@@ -193,7 +193,7 @@ def _get_pipe_seps(cols: Literal[2, 3],
     elif cols == 3:
         left_sep  = '║'
     else: # validation
-        raise FieldError('cols', cols, '2 or 3')
+        raise field_error('cols', cols, '2 or 3')
 
     right_sep = '║' if side == 'r' else '' # same for 2 & 3 cols
 
@@ -351,7 +351,7 @@ def print_piped_line(console: Console,
 
     # validation
     if cols == 2 and side == 'c':
-        raise FieldError('side', side, "'l' or 'r' for 2-column bars")
+        raise field_error('side', side, "'l' or 'r' for 2-column bars")
 
     left_sep, right_sep = _get_pipe_seps(cols, side)
 

@@ -2,7 +2,7 @@
 Main DB table definitions
 """
 
-from .base import Base, MainTableMixin, col_int_fk, col_str, wk_hash, \
+from .base import ORMBase, MainTableMixin, col_int_fk, col_str, wk_hash, \
                   col_datetime, rel, WK_HASH_REGEX
 from .helpers import ClearanceLvl, ContainmentClass, SecondaryClass, \
                      Title, DisruptionClass, RiskClass
@@ -15,7 +15,7 @@ import ipaddress
 
 
 
-class User(MainTableMixin, Base):
+class User(MainTableMixin, ORMBase):
     __tablename__ = 'users'
 
 
@@ -79,7 +79,7 @@ class User(MainTableMixin, Base):
         return value
 
 
-class SCP(MainTableMixin, Base):
+class SCP(MainTableMixin, ORMBase):
     __tablename__ = 'scps'
 
     name = col_str(100, nullable=False) # eg. 'The "Living" Room' (002)
@@ -109,7 +109,7 @@ class SCP(MainTableMixin, Base):
     mtf: Mapped["MTF | None"] = rel('scps')
 
 
-class MTF(MainTableMixin, Base):
+class MTF(MainTableMixin, ORMBase):
     __tablename__ = 'mtfs'
 
     name = col_str(25, nullable=False) # eg. Epsilon-6
@@ -131,7 +131,7 @@ class MTF(MainTableMixin, Base):
     members: Mapped[list["User"]] = rel('mtf', keys='User.mtf_id')
 
 
-class Site(MainTableMixin, Base):
+class Site(MainTableMixin, ORMBase):
     __tablename__ = 'sites'
 
     name = col_str(100, False) # eg. 'Site-01'
@@ -151,7 +151,7 @@ class Site(MainTableMixin, Base):
     staff: Mapped[list["User"]] = rel('site', keys='User.site_id')
 
 
-class AuditLog(MainTableMixin, Base):
+class AuditLog(MainTableMixin, ORMBase):
     __tablename__ = 'audit_log'
 
     user_id = col_int_fk('users.id', nullable=False)

@@ -7,7 +7,7 @@ from typing import Literal
 
 from .lines import print_piped_line, format_centered_text as fc_text
 from ....general.display_config import Bars, Styles, Terminal as Terminal
-from ....general.exceptions import FieldError
+from ....general.exceptions import field_error
 
 
 
@@ -75,7 +75,7 @@ class BarTemplate:
 
         # validation
         if (col_len * self.cols) + pipe_space != self.width:
-            raise FieldError(
+            raise field_error(
                              'width', width,
                              f'a multiple of {self.cols} plus {pipe_space}'
                             )
@@ -154,16 +154,16 @@ class BarTemplate:
 
         # validation
         if pos == 'lt' and not self.triple_top:
-            raise FieldError(
+            raise field_error(
                 'pos', pos,
                 "'t', 'm', or 'b' ('lt' only valid for triple_top bars)"
             )
 
         if pos not in self.sep:
             if self.triple_top:
-                raise FieldError('pos', pos, "'t', 'lt', 'm', or 'b'")
+                raise field_error('pos', pos, "'t', 'lt', 'm', or 'b'")
             else:
-                raise FieldError('pos', pos, "'t', 'm', or 'b'")
+                raise field_error('pos', pos, "'t', 'm', or 'b'")
 
         # render
         self.console.print(f'{Terminal.LEFT_PADDING}{self.sep[pos]}')
@@ -195,13 +195,13 @@ class BarTemplate:
 
         # Validation
         if len(t_s) != expected_len:
-            raise FieldError(
+            raise field_error(
                             'text_styles', t_s,
                             f'{expected_len} tuples, got {len(t_s)}'
                             )
 
         if not all(len(t) == 2 for t in t_s):
-            raise FieldError(
+            raise field_error(
                             'text_styles', t_s,
                             f'All tuples must have length 2'
                             )
@@ -242,13 +242,13 @@ class BarTemplate:
 
         # === Input Validation ===
         if len(text_styles) % self.cols != 0:
-            raise FieldError(
+            raise field_error(
                              'text_styles', text_styles,
                              f'a multiple of {self.cols}'
                             )
 
         if not all(len(t) == 2 for t in text_styles):
-            raise FieldError(
+            raise field_error(
                             'text_styles', text_styles,
                             f'All tuples must have length 2'
                             )

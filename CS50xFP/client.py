@@ -10,8 +10,8 @@ import sys
 from rich.console import Console
 
 from utils import art
-from utils.sql.sql import User
-from utils.socket import recv, send
+from CS50xFP.utils.sql.queries import User
+from CS50xFP.utils.socket.transport import recv, send
 
 from utils.basic import clear
 import utils.client as client
@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
         send(server, f"AUTH {id} {password}") # send auth request to server
         result = recv(server) # receive reply from server
-        
+
         if not result: # no data, some error happened
             art.printc("[ERROR]: NO RESPONSE FROM DEEPWELL")
             server.close()

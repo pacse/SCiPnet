@@ -35,7 +35,7 @@ class FromAttributesMixin(Base):
 
 
 # helpers
-class ORMBase(FromAttributesMixin):
+class PydanticBase(FromAttributesMixin):
     """
     BaseModel for all ORM models
 
@@ -78,7 +78,7 @@ def computed_property(func: Callable[..., Any]) -> property:
 
 # === ORM Models ===
 
-class AuditLog(ORMBase):
+class AuditLog(PydanticBase):
     """
     Basemodel to store audit log information
 
@@ -128,7 +128,7 @@ class AuditLog(ORMBase):
         )
 
 
-class User(ORMBase):
+class User(PydanticBase):
     """
     BaseModel to store user information
 
@@ -211,7 +211,7 @@ class User(ORMBase):
         return 'Active' if self.is_active else 'Inactive'
 
 
-class Site(ORMBase):
+class Site(PydanticBase):
     """
     BaseModel to store site information
 
@@ -277,7 +277,7 @@ class Site(ORMBase):
         return EXPUNGED
 
 
-class MTF(ORMBase):
+class MTF(PydanticBase):
     """
     BaseModel to store MTF information
 
@@ -399,7 +399,7 @@ Team vs Force:
 """
 
 
-class SCP(ORMBase):
+class SCP(PydanticBase):
     """
     BaseModel to store SCP information
 

@@ -6,7 +6,7 @@ import socket
 from threading import active_count, Thread
 
 from utils.server import handle_usr
-from utils.socket import ADDR
+from CS50xFP.utils.socket.transport import ADDR
 
 def main():
     # TODO: Validate
@@ -20,7 +20,7 @@ def main():
         while True: # for each connection
             try:
                 conn, addr = server.accept() # accept it
-                
+
                 ip = f"{addr[0]}:{addr[1]}" # conn ip
 
                 print(f"Connection from {ip}, Thread ID: {active_count() - 1}")

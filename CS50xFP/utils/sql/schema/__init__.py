@@ -4,6 +4,9 @@ Database schema definitions (SQLAlchemy ORM models)
 Contains
 --------
 - Base
+- validate_model
+- validate_table
+
 - MainModels
     - User
     - SCP
@@ -13,13 +16,16 @@ Contains
 
 - HelperModels
     - ClearanceLvl
+
     - ContainmentClass
     - SecondaryClass
     - DisruptionClass
     - RiskClass
+
+    - Title
 """
 
-from .base import Base, validate_model, validate_table
+from .base import ORMBase, validate_model, validate_table
 from .helpers import ClearanceLvl, ContainmentClass, SecondaryClass, \
                      Title, DisruptionClass, RiskClass
 from .main import User, SCP, MTF, Site, AuditLog
@@ -46,4 +52,11 @@ class HelperModels:
     Title = Title
 
 
-__all__ = ['Base', 'MainModels', 'HelperModels', 'validate_model', 'validate_table']
+__all__ = [
+           'ORMBase',
+           'validate_model',
+           'validate_table',
+
+           'MainModels',
+           'HelperModels'
+          ]

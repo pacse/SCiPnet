@@ -27,7 +27,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, DeclarativeBase, Mapped
 
 from datetime import datetime, timezone as tz
-from typing import Literal, Any
+from typing import Any
 
 
 
@@ -72,6 +72,7 @@ Valid table names for SQL queries
 VALID_MODELS = {
                 'User',
                 'SCP',
+                'SCPColours',
                 'MTF',
                 'Site',
                 'AuditLog',
@@ -89,6 +90,7 @@ Valid model names for SQLAlchemy
 - Main Models
     - User
     - SCP
+    - SCPColours
     - MTF
     - Site
     - AuditLog
@@ -123,8 +125,8 @@ def _check_name_against_list(
 
     if not isinstance(name, str) or name not in valid_names:
         return False
-
     return True
+
 
 def validate_table(t_name: str) -> bool:
     """
@@ -142,7 +144,6 @@ def validate_table(t_name: str) -> bool:
         - False if `t_name` is not a string
         - False if `t_name` is not in `VALID_TABLES`
     """
-
     return _check_name_against_list(t_name, VALID_TABLES)
 
 def validate_model(m_name: str) -> bool:
@@ -161,7 +162,6 @@ def validate_model(m_name: str) -> bool:
         - False if `m_name` is not a string
         - False if `m_name` is not in `VALID_MODELS`
     """
-
     return _check_name_against_list(m_name, VALID_MODELS)
 
 
@@ -323,7 +323,7 @@ class HelperTableMixin:
 
 # === ORM table base class ===
 
-class Base(DeclarativeBase):
+class ORMBase(DeclarativeBase):
     """
     Base class for SQLAlchemy ORM models.
 
@@ -375,5 +375,5 @@ __all__ = [
            'MainTableMixin',
 
            # Base
-           'Base',
+           'ORMBase',
           ]

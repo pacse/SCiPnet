@@ -9,7 +9,7 @@ Contains
 
 from ..helpers import print_lines, printc, timestamp
 from ...general.display_config import Boxes
-from ...general.exceptions import FieldError
+from ...general.exceptions import field_error
 
 
 
@@ -43,7 +43,7 @@ def basic_box(lines: list[str]) -> None:
 
     # check width
     if box_width > Boxes.MAX_TEXT_SIZE:
-        raise FieldError(
+        raise field_error(
             'line length', max_line_len,
             ('longest line to be '
              f'{Boxes.MAX_TEXT_SIZE - Boxes.PADDING} chars or fewer')
