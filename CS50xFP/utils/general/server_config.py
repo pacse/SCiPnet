@@ -8,6 +8,7 @@ Contains
 """
 
 from struct import calcsize
+from ..sql.schema import MainModels
 
 # === Constants ===
 
@@ -92,13 +93,20 @@ class Server:
     DEBUG = False
     """Enable/disable debug messages"""
 
-    VALID_F_TYPES = frozenset({
-        "SCP",
-        "MTF",
-        "SITE",
-        "USER",
-    })
-    """Valid field types for various operations"""
+    VALID_F_TYPES: dict[
+        str,
+        type[MainModels.SCP] | type[MainModels.MTF] |
+        type[MainModels.Site] | type[MainModels.User]
+    ] = {
+        'SCP': MainModels.SCP,
+        "MTF": MainModels.MTF,
+        "SITE": MainModels.Site,
+        "USER": MainModels.User,
+    }
+    """
+    Valid field types and their associated deepwell table model
+    for various operations
+    """
 
 
 
