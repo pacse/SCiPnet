@@ -34,6 +34,7 @@ class MessageTypes(StrEnum):
     - AUTH_SUCCESS
 
     - ACCESS_REQUEST
+    - ACCESS_TYPE_FAIL
     - ACCESS_REDACTED
     - ACCESS_EXPUNGED
     - ACCESS_GRANTED
@@ -43,6 +44,7 @@ class MessageTypes(StrEnum):
     AUTH_SUCCESS = 'auth_success'
 
     ACCESS_REQUEST = 'access_request'
+    ACCESS_TYPE_FAIL = 'access_type_fail'
     ACCESS_REDACTED = 'access_redacted'
     ACCESS_EXPUNGED = 'access_expunged'
     ACCESS_GRANTED = 'access_granted'
@@ -102,6 +104,20 @@ class AccessRequestData(TypedDict):
     f_type: str
     f_id: int
 
+class AccessTypeFailData(TypedDict):
+    """
+    Data for access file type fail (not found)
+
+    Parameters
+    ----------
+    tried : str
+        the attempted file type
+    valid : list[str] | set[str]
+        the valid file types
+    """
+    tried: str
+    valid: list[str] | set[str]
+
 class AccessRedactedData(TypedDict):
     """
     Data for access redacted response from server
@@ -136,18 +152,6 @@ class AccessExpungedData(TypedDict):
     f_type: str
     f_id: int
 
-class AccessGrantedData(TypedDict):
-    """
-    Data for access granted response from server
-
-    Parameters
-    ----------
-    file : dict[str, Any]
-        The dumped file data
-    """
-    file: dict[str, Any]
-
-
 
 # === Message Types ===
 
@@ -168,6 +172,10 @@ class AccessRequest(TypedDict):
     type: Literal[MessageTypes.ACCESS_REQUEST]
     data: AccessRequestData
 
+class AccessTypeFail(TypedDict):
+    type: Literal[MessageTypes.ACCESS_TYPE_FAIL]
+    data: AccessTypeFailData
+
 class AccessRedacted(TypedDict):
     type: Literal[MessageTypes.ACCESS_REDACTED]
     data: AccessRedactedData
@@ -178,7 +186,7 @@ class AccessExpunged(TypedDict):
 
 class AccessGranted(TypedDict):
     type: Literal[MessageTypes.ACCESS_GRANTED]
-    data: AccessGrantedData
+    data: dict[str, str]
 
 
 
@@ -186,11 +194,12 @@ AuthMessages = AuthRequest | AuthFailed | AuthSuccess
 AuthDatas = AuthRequestData | AuthFailedData | AuthSuccessData
 
 AccessMessages = (
-    AccessRequest | AccessRedacted | AccessExpunged | AccessGranted
+    AccessRequest | AccessRedacted | AccessExpunged |
+    AccessGranted | AccessTypeFail
 )
 AccessDatas = (
     AccessRequestData | AccessRedactedData |
-    AccessExpungedData | AccessGrantedData
+    AccessExpungedData | AccessTypeFailData
 )
 
 Message = AuthMessages | AccessMessages
@@ -204,12 +213,14 @@ format_map = {
     MessageTypes.AUTH_REQUEST: AuthRequestData,
     MessageTypes.AUTH_FAILED: AuthFailedData,
     MessageTypes.AUTH_SUCCESS: AuthSuccessData,
+
     MessageTypes.ACCESS_REQUEST: AccessRequestData,
+    MessageTypes.ACCESS_TYPE_FAIL: AccessTypeFailData,
     MessageTypes.ACCESS_REDACTED: AccessRedactedData,
     MessageTypes.ACCESS_EXPUNGED: AccessExpungedData,
-    MessageTypes.ACCESS_GRANTED: AccessGrantedData
 }
 """Maps MessageTypes to their respective Data TypedDicts"""
+
 
 
 # === Exports ===
@@ -225,6 +236,7 @@ class Messages:
     - AuthSuccess
 
     - AccessRequest
+    - AccessTypeFail
     - AccessRedacted
     - AccessExpunged
     - AccessGranted
@@ -234,6 +246,7 @@ class Messages:
     AuthSuccess = AuthSuccess
 
     AccessRequest = AccessRequest
+    AccessTypeFail = AccessTypeFail
     AccessRedacted = AccessRedacted
     AccessExpunged = AccessExpunged
     AccessGranted = AccessGranted
@@ -258,9 +271,9 @@ class MessageDatas:
     AuthSuccessData = AuthSuccessData
 
     AccessRequestData = AccessRequestData
+    AccessTypeFailData = AccessTypeFailData
     AccessRedactedData = AccessRedactedData
     AccessExpungedData = AccessExpungedData
-    AccessGrantedData = AccessGrantedData
 
 
 __all__ = [

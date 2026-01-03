@@ -3,6 +3,7 @@ Message builders for socket communication
 
 Contains
 --------
+- gen_msg
 - gen_auth_request
 - gen_auth_failed
 - gen_auth_success
@@ -12,16 +13,17 @@ Contains
 - gen_access_expunged
 - gen_access_granted
 """
-from typing import Any, overload, Literal
+from typing import Any, overload, Literal, cast
 
 from .protocol import (
-    MessageTypes, format_map, Messages, MessageDatas, Message
+    MessageTypes, Messages, MessageDatas, Message, MessageData, format_map
 )
 
 from ..general.validation import validate_hex, validate_dict, validate_str, \
-                                 validate_int, validate_enum, validate_msg
-from ..general.exceptions import arg_error
+                                 validate_int, validate_enum
+from ..general.exceptions import arg_error, field_error
 from ..sql.transformers import Models as PyModels, PydanticBase
+from ..general.server_config import Server as ServerCfg
 
 
 
@@ -54,26 +56,38 @@ def gen_msg(
 
 @overload
 def gen_msg(
+              msg_type: Literal[MessageTypes.ACCESS_TYPE_FAIL],
+              data: MessageDatas.AccessTypeFailData
+             ) -> Messages.AccessTypeFail: ...
+
+@overload
+def gen_msg(
               msg_type: Literal[MessageTypes.ACCESS_REDACTED],
               data: MessageDatas.AccessRedactedData
              ) -> Messages.AccessRedacted: ...
 
 @overload
 def gen_msg(
-              msg_type: Literal[MessageTypes.ACCESS_EXPUNGED],
-              data: MessageDatas.AccessExpungedData
-             ) -> Messages.AccessExpunged: ...
+            msg_type: Literal[MessageTypes.ACCESS_EXPUNGED],
+            data: MessageDatas.AccessExpungedData
+           ) -> Messages.AccessExpunged: ...
 
 @overload
 def gen_msg(
-              msg_type: Literal[MessageTypes.ACCESS_GRANTED],
-              data: MessageDatas.AccessGrantedData
-             ) -> Messages.AccessGranted: ...
+            msg_type: Literal[MessageTypes.ACCESS_GRANTED],
+            data: dict[str, str]
+           ) -> Messages.AccessGranted: ...
+
+@overload
+def gen_msg(
+            msg_type: MessageTypes,
+            data: MessageData
+           ) -> Message: ...
 
 def gen_msg(
-              msg_type: str | MessageTypes,
-              data: dict[str, Any]
-             ) -> Message:
+            msg_type: str | MessageTypes,
+            data: dict[str, Any] | MessageData
+           ) -> Message:
     """
     Generates a generic message
 
@@ -81,7 +95,7 @@ def gen_msg(
     ----------
     msg_type : str | MessageTypes
         The message type (string or enum member)
-    data : dict[str, Any]
+    data : dict[str, Any] | MessageData
         The message data
 
     Returns
@@ -93,16 +107,24 @@ def gen_msg(
     ------
     TypeError
         - If `msg_type` is not a member of MessageTypes
-        - If `data` is not a dict
+        - If `data` is not a dict with str keys
         - If `data` does not match the expected format for `msg_type`
     """
-    msg_type = validate_enum('msg_type', msg_type, MessageTypes)
-    data = validate_msg(data)
 
-    return {
-        'type': msg_type.value,
+    validated_type = validate_enum('msg_type', msg_type, MessageTypes)
+    expected_format = format_map.get(validated_type)
+    if expected_format:
+        validate_dict('data', data, expected_format)
+    else:
+        raise field_error(
+            'msg_type', msg_type,
+            f"msg_type to have a corresponding 'data' TypedDict"
+        )
+
+    return cast(Message, {
+        'type': msg_type,
         'data': data
-    }
+    })
 
 
 
@@ -219,6 +241,32 @@ def gen_access_request(
         }
     )
 
+def gen_access_type_fail(
+                         tried: str
+                        ) -> Messages.AccessTypeFail:
+    """
+    Generates an AccessTypeFail message
+
+    Parameters
+    ----------
+    tried : str
+        The invalid file type that was tried
+
+    Returns
+    -------
+    AccessTypeFail : dict[str, Any]
+        The generated AccessTypeFail message
+    """
+    validate_str('tried', tried)
+
+    return gen_msg(
+        MessageTypes.ACCESS_TYPE_FAIL,
+        {
+         'tried': tried,
+         'valid': [k for k in ServerCfg.VALID_F_TYPES.keys()]
+        }
+    )
+
 def gen_access_redacted(
                         user_clear: str,
                         user_hex: str,
@@ -290,30 +338,24 @@ def gen_access_expunged(
     )
 
 def gen_access_granted(
-                       file: PydanticBase
+                       data: dict[str, str]
                       ) -> Messages.AccessGranted:
     """
     Generates an AccessGranted message
 
     Parameters
     ----------
-    file : Any
-        The Pydantic model of the file (eg. User, SCP, etc.)
+    data : dict[str, str]
+        The gathered file data
 
     Returns
     -------
     AccessGranted : dict[str, Any]
         The generated AccessGranted message
     """
-    if not hasattr(file, 'model_dump'):
-        raise arg_error(
-            'file', file,
-            'File must be a Pydantic model instance'
-        )
+    validate_dict('data', data)
 
     return gen_msg(
         MessageTypes.ACCESS_GRANTED,
-        {
-         'file': file.model_dump()
-        }
+        data
     )

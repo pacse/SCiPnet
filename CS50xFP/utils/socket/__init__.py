@@ -1,5 +1,15 @@
 """
 Socket communication utilities for server-client interaction
+
+Contains
+--------
+- Msg
+- Protocol
+- send
+- recv
+- test_send
+- test_recv
+- gen_socket_conn
 """
 
 
@@ -11,6 +21,7 @@ from .builders import (
     gen_auth_success,
 
     gen_access_request,
+    gen_access_type_fail,
     gen_access_granted,
     gen_access_redacted,
     gen_access_expunged
@@ -45,6 +56,7 @@ class Msg:
     auth_success = staticmethod(gen_auth_success)
 
     access_request = staticmethod(gen_access_request)
+    access_type_fail = staticmethod(gen_access_type_fail)
     access_granted = staticmethod(gen_access_granted)
     access_redacted = staticmethod(gen_access_redacted)
     access_expunged = staticmethod(gen_access_expunged)
