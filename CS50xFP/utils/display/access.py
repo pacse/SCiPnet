@@ -8,7 +8,7 @@ Display functions related to file access
 
 from .core.boxes import basic_box_with_text
 from ..general.display_config import AccessMessages as AM
-from .helpers import check_type_and_empty_str
+from ..general.validation import validate_str
 
 
 def redacted(
@@ -47,7 +47,7 @@ def redacted(
                       (file_classification, 'file_classification'),
                       (usr_clearance, 'usr_clearance')
                      ]:
-        check_type_and_empty_str(v, v_name)
+        validate_str(v_name, v)
 
     basic_box_with_text(
                         [AM.REDACTED_BOX],
@@ -83,7 +83,7 @@ def expunged(file_ref: str) -> None:
     - Art by ChatGPT
     """
 
-    check_type_and_empty_str(file_ref, 'file_ref')
+    validate_str('file_ref', file_ref)
 
     basic_box_with_text(
                         [AM.EXPUNGED_BOX],
@@ -113,7 +113,7 @@ def granted(file_ref: str) -> None:
     - Art by ChatGPT
     """
 
-    check_type_and_empty_str(file_ref, 'file_ref')
+    validate_str('file_ref', file_ref)
 
     basic_box_with_text(
                         [AM.GRANTED_BOX],

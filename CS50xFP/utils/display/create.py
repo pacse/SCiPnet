@@ -4,8 +4,7 @@ Display functions related to file creation
 
 from .core.boxes import basic_box_with_text
 from ..general.display_config import CreateMessages as CM
-from .helpers import check_type_and_empty_str
-
+from ..general.validation import validate_str, validate_int
 
 
 def create_f(f_type: str) -> None:
@@ -30,7 +29,7 @@ def create_f(f_type: str) -> None:
     - Art by ChatGPT
     """
 
-    check_type_and_empty_str(f_type, 'f_type')
+    validate_str('f_type', f_type)
 
     basic_box_with_text(
                         [CM.CREATE_BOX],
@@ -65,8 +64,8 @@ def clearance_denied(
     - Art by ChatGPT
     """
 
-    check_type_and_empty_str(required_clearance, 'required_clearance')
-    check_type_and_empty_str(user_clearance, 'user_clearance')
+    validate_str('required_clearance', required_clearance)
+    validate_str('user_clearance', user_clearance)
 
 
     basic_box_with_text(
@@ -101,7 +100,7 @@ def invalid_f_type(f_type: str) -> None:
     - Calls `basic_box_with_text()` with `RAISA_log = True`
     """
 
-    check_type_and_empty_str(f_type, 'f_type')
+    validate_str('f_type', f_type)
 
     basic_box_with_text(
                         [CM.INVALID_FD_BOX],
@@ -172,12 +171,8 @@ def created_f(f_type: str, f_id: int) -> None:
     - Art by ChatGPT
     """
 
-    check_type_and_empty_str(f_type, 'f_type')
-
-    if not isinstance(f_id, int):
-        raise TypeError('f_id must be an int')
-    if f_id < 0:
-        raise ValueError('f_id must be positive')
+    validate_str('f_type', f_type)
+    validate_int('f_id', f_id, positive=True)
 
     basic_box_with_text(
                         [CM.FILE_CREATED_BOX],

@@ -3,8 +3,6 @@ Helpers for display functions
 
 Contains
 --------
-- check_type_and_empty_str()
-
 - printc()
 - print_lines()
 - print_md()
@@ -20,38 +18,7 @@ from os import name, system
 from datetime import datetime
 from rich.console import Console
 from rich.markdown import Markdown as Md
-
-
-
-def check_type_and_empty_str(var: str, var_name: str) -> bool:
-    """
-    checks if `var` is a string and non-empty
-
-    Parameters
-    ----------
-    var : str
-        variable to check
-    var_name : str
-        name of variable to use in error messages
-
-    Raises
-    ------
-    TypeError
-        If `var` is not a string
-    ValueError
-        If `var` is empty or whitespace
-
-    Returns
-    -------
-    bool
-        True if `var` is a non-empty string
-    """
-    if not isinstance(var, str):
-        raise TypeError(f'`{var_name}` must be a string')
-    if not var or var.isspace():
-        raise ValueError(f'`{var_name}` must be a non-empty string')
-
-    return True
+from ..general.validation import validate_str, validate_field
 
 
 def printc(
@@ -80,22 +47,11 @@ def printc(
     """
 
     # validation
-    for v_name, v in [
-                      ('string', string),
-                      ('end', end)
-                     ]:
-        if not isinstance(v, str):
-            raise TypeError(f'Expected `{v_name}` to be type str, '
-                            f'got {type(v).__name__}')
-
-    for v_name, v in [
-                      ('flush', flush),
-                      ('truncate', truncate),
-                      ('overwrite', overwrite)
-                     ]:
-        if not isinstance(v, bool):
-            raise TypeError(f'Expected `{v_name}` to be type bool, '
-                            f'got {type(v).__name__}')
+    validate_field('string', string, str)
+    validate_field('end', end, str)
+    validate_field('flush', flush, bool)
+    validate_field('truncate', truncate, bool)
+    validate_field('overwrite', overwrite, bool)
 
     # print
     if string == '':
@@ -128,21 +84,18 @@ def print_lines(
     """
 
     # validation
-    if not isinstance(lines, list):
-        raise TypeError('Expected `lines` to be type list, '
-                        f'received {type(lines).__name__}')
+    validate_field('lines', lines, list)
     if not all(isinstance(line, str) for line in lines):
         raise TypeError('Expected all items in `lines` to be type str')
-
-    if not lines:
-        return
-
 
     # print
     for line in lines:
         printc(line)
 
-def print_md(text: str, console: Console) -> None:
+def print_md(
+             text: str,
+             console: Console
+            ) -> None:
     """
     Prints markdown text to the console
 
@@ -165,14 +118,16 @@ def print_md(text: str, console: Console) -> None:
     -----
     Calls `console.print(Md(`text`))`
     """
-    check_type_and_empty_str(text, 'text')
-
-    if not isinstance(console, Console):
-        raise TypeError('`console` must be a rich Console instance')
+    validate_str('text', text)
+    validate_field('console', console, Console)
 
     console.print(Md(text))
 
-def print_md_title(title: str, text: str, console: Console) -> None:
+def print_md_title(
+                   title: str,
+                   text: str,
+                   console: Console
+                  ) -> None:
     """
     Prints markdown text with a title to the console
 
@@ -201,8 +156,8 @@ def print_md_title(title: str, text: str, console: Console) -> None:
     - Calls `print_md(f'## {title}\n{text}', console)`
     """
 
-    check_type_and_empty_str(title, 'title')
-    check_type_and_empty_str(text, 'text')
+    validate_str('title', title)
+    validate_str('text', text)
 
     print_md(f'## {title}\n{text}', console)
 
@@ -215,8 +170,8 @@ def clear() -> None:
     # determine clear command
     if name == 'nt':       # OS is windows
         command = 'cls'
-    else:                  # OS is mac or linux (or any other I guess, it's an else statement...)
-        command = 'clear'
+    else:                  # OS is mac or linux (or any other I guess,
+        command = 'clear'  #                     it's an else statement...)
 
     # execute clear command
     try:

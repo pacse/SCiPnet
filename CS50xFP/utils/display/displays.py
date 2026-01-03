@@ -16,12 +16,13 @@ from rich.console import Console
 from .core.bars import acs_bar, site_bar, mtf_bar, user_bar
 from .core.tables import print_table_users, print_table_mtfs, \
                          print_table_scps
-from .helpers import print_md, print_md_title, check_type_and_empty_str
+from .helpers import print_md, print_md_title
+from ..general.validation import validate_str
 from ..sql.transformers import Models
 
 
 def _display_additional_files(
-                              additional: dict[str, str],
+                              additional: dict[str, str] | None,
                               console: Console
                              ) -> None:
     """
@@ -46,11 +47,12 @@ def _display_additional_files(
     # validation happens upstream
 
 
-    # logic
-    if additional:
-        names = [key for key in additional.keys()]
-    else:
+    if not additional:
         names = []
+        additional = {}
+    else:
+        names = [key for key in additional.keys()]
+
 
 
     while True: # keep offering files till user closes
@@ -90,7 +92,7 @@ def display_scp(
                 info: Models.SCP,
                 desc: str,
                 cps: str,
-                addenda: dict[str, str],
+                addenda: dict[str, str] | None,
                 console: Console
                ) -> None:
     """
@@ -126,8 +128,8 @@ def display_scp(
     if not isinstance(info, Models.SCP):
         raise TypeError('`info` must be a Models.SCP instance')
 
-    check_type_and_empty_str(desc, 'desc')
-    check_type_and_empty_str(cps, 'cps')
+    validate_str('desc', desc)
+    validate_str('cps', cps)
 
     if not isinstance(addenda, dict):
         raise TypeError('`addenda` must be a dict[str, str]')
@@ -156,10 +158,7 @@ def display_site(
                  info: Models.Site,
                  site_loc: str,
                  site_desc: str,
-                 staff: list[Models.User],
-                 mtfs: list[Models.MTF],
-                 scps: list[Models.SCP],
-                 additional: dict[str, str],
+                 additional: dict[str, str] | None,
                  console: Console,
                 ) -> None:
     """
@@ -203,8 +202,8 @@ def display_site(
     if not isinstance(info, Models.Site):
         raise TypeError('`info` must be a Models.Site instance')
 
-    check_type_and_empty_str(site_loc, 'site_loc')
-    check_type_and_empty_str(site_desc, 'site_desc')
+    validate_str('site_loc', site_loc)
+    validate_str('site_desc', site_desc)
 
     if not isinstance(additional, dict):
         raise TypeError('`additional` must be a dict[str, str]')
@@ -224,13 +223,13 @@ def display_site(
 
     # now tables
     print_md('## Site Staff', console)
-    print_table_users(staff)
+    print_table_users(info.staff)
 
     print_md('## Site MTFs', console)
-    print_table_mtfs(mtfs)
+    print_table_mtfs(info.mtfs)
 
     print_md('## Site SCPs', console)
-    print_table_scps(scps)
+    print_table_scps(info.scps)
 
     # now additional files
     _display_additional_files(additional, console)
@@ -267,7 +266,7 @@ def display_mtf(
     if not isinstance(info, Models.MTF):
         raise TypeError('`info` must be a Models.MTF instance')
 
-    check_type_and_empty_str(mission, 'mission')
+    validate_str(mission, 'mission')
 
     if not isinstance(console, Console):
         raise TypeError('`console` must be a rich Console instance')
