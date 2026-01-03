@@ -9,27 +9,27 @@ if __name__ == '__main__':
     if cs50xfp_dir not in sys.path:
         sys.path.insert(0, cs50xfp_dir)
 
-from CS50xFP.utils.socket.builders import gen_msg
-from CS50xFP.utils.socket.protocol import MessageTypes, MessageData
+from utils.socket.builders import gen_msg
+from utils.socket.protocol import MessageTypes, MessageDatas
 from utils.tests.testdata import create_test_user, create_test_scp
 
 
 # === Test Data Generators ===
 
-def get_valid_auth_request_data() -> MessageData.AuthRequestData:
+def get_valid_auth_request_data() -> MessageDatas.AuthRequestData:
     return {'user_id': 123, 'password': 'secure_pass'}
 
-def get_valid_auth_failed_data() -> MessageData.AuthFailedData:
+def get_valid_auth_failed_data() -> MessageDatas.AuthFailedData:
     return {'field': 'user_id'}
 
-def get_valid_auth_success_data() -> MessageData.AuthSuccessData:
+def get_valid_auth_success_data() -> MessageDatas.AuthSuccessData:
     mock_user = create_test_user()
-    return {'user': mock_user}
+    return {'user': mock_user.model_dump()}
 
-def get_valid_access_request_data() -> MessageData.AccessRequestData:
+def get_valid_access_request_data() -> MessageDatas.AccessRequestData:
     return {'f_type': 'scp', 'f_id': 173}
 
-def get_valid_access_redacted_data() -> MessageData.AccessRedactedData:
+def get_valid_access_redacted_data() -> MessageDatas.AccessRedactedData:
     return {
         'user_clear': 'Level 2',
         'user_hex': '#FF0000',
@@ -37,12 +37,12 @@ def get_valid_access_redacted_data() -> MessageData.AccessRedactedData:
         'needed_hex': '#00FF00'
     }
 
-def get_valid_access_expunged_data() -> MessageData.AccessExpungedData:
+def get_valid_access_expunged_data() -> MessageDatas.AccessExpungedData:
     return {'f_type': 'scp', 'f_id': 682}
 
-def get_valid_access_granted_data() -> MessageData.AccessGrantedData:
+def get_valid_access_granted_data() -> MessageDatas.AccessGrantedData:
     mock_scp = create_test_scp()
-    return {'file': mock_scp}
+    return {'file': mock_scp.model_dump()}
 
 
 # === Test Runner Utilities ===
@@ -102,6 +102,7 @@ class TestRunner:
             print(f"✗ {test_name}")
             if show_details:
                 print(f"  Error: {error_msg}")
+                raise e
 
     def print_summary(self):
         total = self.passed + self.failed
@@ -197,21 +198,21 @@ class TestInvalidMessageType:
     def test_none_message_type(self):
         data = get_valid_auth_request_data()
         self.runner.assert_raises_with_message(
-            TypeError, 'message_type',
+            ValueError, 'msg_type',
             gen_msg, None, data
         )
 
     def test_string_message_type(self):
         data = get_valid_auth_request_data()
         self.runner.assert_raises_with_message(
-            TypeError, 'message_type',
-            gen_msg, 'auth_request', data
+            ValueError, 'msg_type',
+            gen_msg, 'auth_good!', data
         )
 
     def test_int_message_type(self):
         data = get_valid_auth_request_data()
         self.runner.assert_raises_with_message(
-            TypeError, 'message_type',
+            ValueError, 'msg_type',
             gen_msg, 123, data
         )
 
@@ -503,17 +504,17 @@ def run_all_tests():
 
     runner = TestRunner()
 
-    # print("\n" + "=" * 70)
-    # print("--- Valid Messages Tests ---")
-    # print("=" * 70)
-    # TestValidMessages(runner).run_all()
-    # input("\nPress Enter to continue to next section...")
+    print("\n" + "=" * 70)
+    print("--- Valid Messages Tests ---")
+    print("=" * 70)
+    TestValidMessages(runner).run_all()
+    input("\nPress Enter to continue to next section...")
 
-    # print("\n" + "=" * 70)
-    # print("--- Invalid Message Type Tests ---")
-    # print("=" * 70)
-    # TestInvalidMessageType(runner).run_all()
-    # input("\nPress Enter to continue to next section...")
+    print("\n" + "=" * 70)
+    print("--- Invalid Message Type Tests ---")
+    print("=" * 70)
+    TestInvalidMessageType(runner).run_all()
+    input("\nPress Enter to continue to next section...")
 
     print("\n" + "=" * 70)
     print("--- Invalid Data Type Tests ---")

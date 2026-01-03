@@ -5,8 +5,10 @@ import os
 import socket
 from typing import cast, Any
 
-from .sql.queries import get_field, get_next_id, log_event
+from .sql.queries import get_next_id, log_event
 from .socket.transport import send, recv
+from .general.server_config import Server
+from .sql.transformers import Models as PyModels
 
 # enable/disable debug messages
 
@@ -284,15 +286,23 @@ def create(client: socket.socket, f_type: str, thread_id: int, usr: User) -> Non
     send(client, "CREATED")
 
 
-def access(client: socket.socket, f_type: str, f_identifier: int | str, thread_id: int, usr: User) -> None:
+def access(
+           client: socket.socket,
+           f_type: str,
+           f_identifier: int | str,
+           usr: PyModels.User
+          ) -> None:
     # TODO: validate
     # check if valid file type
-    if not valid_f_type(f_type):
+    if f_type not in Server.VALID_F_TYPES:
         send(client, ["INVALID FILETYPE", f_type])
-        log_event(usr.u_id,
-                  "USR TRIED TO ACCESS A INVALID FILE TYPE",
+        log_event(
+                  usr.id,
+                  'NOTIMPLEMTED',
+                  "USR TRIED TO ACCESS AN INVALID FILE TYPE",
                   f"ATTEMPTED TYPE: {f_type}",
-                  usr.ip)
+                  False
+                 )
         return
 
     # try to get file from sql database

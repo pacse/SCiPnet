@@ -4,12 +4,12 @@ Socket utilities for client and server communication
 
 # TODO: Implement TLS: after submit final project
 from struct import unpack
-from typing import Any
+from typing import Any, cast
 import socket
 
 from .helpers import encode, decode, socket_context_manager
 from .builders import gen_msg
-from .protocol import MessageTypes, Message
+from .protocol import MessageTypes, Message, MessageData
 from ..general.server_config import Socket as SockConf
 from ..general.exceptions import MaxSizeLimitError
 from ..general.validation import validate_msg
@@ -41,7 +41,7 @@ def send(conn: socket.socket, msg_type: MessageTypes, msg_data: dict[str, Any]) 
     """
 
     # build data
-    data = encode(gen_msg(msg_type, msg_data))
+    data = encode(gen_msg(msg_type, cast(MessageData, msg_data)))
 
     with socket_context_manager(
         'Error sending data', conn,
