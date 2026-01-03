@@ -11,11 +11,13 @@ from typing import Any, get_type_hints
 from enum import Enum
 from re import fullmatch
 from typing import TypeVar
+from ipaddress import IPv4Address, IPv6Address, ip_address
 
 from .exceptions import arg_error, field_error, ColumnNotFoundError
 from .server_config import Server
 from ..sql.schema import ORMBase
-from ..socket.protocol import MESSAGE_KEYS, format_map, MessageTypes
+from ..socket.protocol import MESSAGE_KEYS, format_map, MessageTypes, \
+                              MessageData
 
 
 E = TypeVar('E', bound=Enum)
@@ -50,7 +52,17 @@ def validate_field(
     -----
     - If `field` is not a non-empty str, I will gut you like a fish
     """
-    if not isinstance(field_val, expected_type):
+
+    # handle dict[str, Any]
+    if expected_type == dict[str, Any]:
+        if not isinstance(field_val, dict):
+            raise arg_error(field, field_val, 'dict')
+        for key in field_val.keys():
+            if not isinstance(key, str):
+                raise arg_error(f'{field} key ({key!r})', key, str)
+
+    # generic handling
+    elif not isinstance(field_val, expected_type):
         raise arg_error(field, field_val, expected_type)
 
 
@@ -86,6 +98,9 @@ def validate_enum(
     - If `field` is not a non-empty str, I will gut you like a fish
     - If `enum_type` is not an Enum, I will gut you like a fish
     """
+    if isinstance(field_val, enum_type):
+        return field_val
+
     try:
         return enum_type(field_val)
     except ValueError as e:
@@ -112,7 +127,7 @@ def validate_str(field: str, field_val: str) -> None:
     ------
     TypeError
         If `field` is not a str
-    FieldError
+    ValueError
         If `field_val` is empty or whitespace-only
 
     Notes
@@ -139,7 +154,7 @@ def validate_hex(field: str, field_val: str) -> None:
     ------
     TypeError
         If `field` is not a str
-    FieldError
+    ValueError
         If `field_val` is not a valid hex colour code
 
     Notes
@@ -152,6 +167,39 @@ def validate_hex(field: str, field_val: str) -> None:
         raise field_error(
             field, field_val, 'valid hex colour code (eg. #1A2B3C)'
         )
+
+def validate_ip(field: str, field_val: str) -> None:
+    """
+    Validates a string (field_val) is a valid IPv4 or IPv6 address
+
+    Parameters
+    ----------
+    field : str
+        The name of the field (for error messages)
+    field_val : str
+        The string to validate
+
+    Raises
+    ------
+    TypeError
+        If `field` is not a str
+    ValueError
+        If `field_val` is not a valid IPv4 address
+
+    Notes
+    -----
+    - If `field` is not a non-empty str, I will gut you like a fish
+    """
+    validate_str(field, field_val)
+
+    try:
+        ip_address(field_val)
+    except ValueError as e:
+        raise field_error(
+            field, field_val,
+            'valid IPv4 or IPv6 address (eg. 192.168.1.1 or ::1)'
+        ) from e
+
 
 def validate_int(
                   field: str,
@@ -198,7 +246,7 @@ def validate_int(
 
 def validate_dict(
                   field: str,
-                  field_val: dict[str, Any],
+                  field_val: dict[str, Any] | MessageData,
                   format: type | None = None
                  ) -> None:
     """
@@ -250,9 +298,10 @@ def validate_dict(
                 expected_type
             )
 
+
 def validate_msg(
                  msg: dict[str, Any]
-                ) -> dict[str, Any]:
+                ) -> None:
     """
     Validates a message has the correct data format
 
@@ -290,9 +339,7 @@ def validate_msg(
         )
 
     # validate data format
-    validate_dict('msg', msg, expected_format)
-
-    return msg
+    validate_dict("msg['data']", msg['data'], expected_format)
 
 
 # === Socket Funcs ===
