@@ -7,9 +7,6 @@ from werkzeug.security import generate_password_hash
 from .art import *
 from .socket.transport import ADDR, send, recv
 
-# for typedefing
-from rich.console import Console
-from typing import Any
 
 def conn_to_server() -> socket.socket:
     '''
@@ -204,50 +201,3 @@ def create(server: socket.socket, f_type: str, c_lvl: int) -> None:
 
     elif all_clear == "CREATED":
         created_f(f_type)
-
-
-def access(server: socket.socket, console: Console, type: str, file: str) -> None:
-
-    # send server access request
-    send(server, f"ACCESS {type} {file}")
-
-    # get response
-    response = recv(server)
-    if not response: # ensure we have data
-        no_response()
-        server.close()
-        return
-
-    # check for errors
-    if response == "INVALID FILETYPE":
-        invalid_f_type(type)
-        return
-
-    elif response == "EXPUNGED":
-        expunged(f"{type} {file}")
-        return
-
-    elif response[0] == "REDACTED":
-        redacted(f"{type} {file}", response[1], response[2])
-        return
-
-    elif response[0] != "GRANTED":
-        printc(f"INVALID RESPONSE: {response!r}")
-        server.close()
-        return
-
-    f_data: dict[str, Any] = response[1]
-
-    if type == "SCP":
-        display_scp(f_data, console)
-
-    elif type == "MTF":
-        display_mtf(f_data, console)
-    elif type == "SITE":
-        display_site(f_data, console)
-
-    elif type == "USER":
-        display_user(f_data, console)
-    else:
-        # TODO: Better message
-        printc(f"INVALID F_TYPE: {type!r}")
