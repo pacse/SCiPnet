@@ -10,7 +10,7 @@ from contextlib import contextmanager
 
 from ..general.server_config import Socket as SockConf
 from ..general.validation import validate_data, validate_conn, validate_field
-from ..general.exceptions import MaxSizeLimitError
+from ..general.exceptions import MaxSizeLimitError, MessageDecodeError
 
 
 
@@ -22,19 +22,44 @@ ExceptionTypes = type[Exception] | tuple[type[Exception], ...]
 
 # === Main Functions ===
 
-def gen_socket_conn() -> socket.socket:
+def gen_socket_conn(
+                    bind: bool = False,
+                    connect: bool = False
+                   ) -> socket.socket:
     """
     Generates a socket connection with:
     - AF_INET as address family
     - SOCK_STREAM as socket type
+    - Default timeout from SockConf (if connecting)
+
+    Parameters
+    ----------
+    bind : bool
+        Whether to bind the socket to ADDR from SockConf
+    connect : bool
+        Whether to connect the socket to ADDR from SockConf
+
+    Raises
+    ------
+    ValueError
+        If both `bind` and `connect` are True
 
     Returns
     -------
     socket.socket
         A socket connection
     """
+    if bind and connect:
+        raise ValueError("Both 'bind' and 'connect' cannot be True")
+
     conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    conn.settimeout(SockConf.DEF_TIMEOUT)
+
+    if bind:
+        conn.bind(SockConf.ADDR)
+    if connect:
+        conn.connect(SockConf.ADDR)
+        conn.settimeout(SockConf.DEF_TIMEOUT)
+
     return conn
 
 
@@ -89,7 +114,7 @@ def decode(data: bytes) -> Any:
     try:
         return loads(data.decode())
     except (UnicodeDecodeError, JSONDecodeError) as e:
-        raise ValueError(f'Error decoding data: {e}') from e
+        raise MessageDecodeError(e) from e
 
 @contextmanager
 def socket_context_manager(
@@ -168,6 +193,7 @@ def test_send(conn: socket.socket) -> None:
     with socket_context_manager(
         'Connection test failed', conn, True
     ):
+        # brief handshake
         conn.sendall(SockConf.TEST_MSG)
         result = conn.recv(SockConf.TEST_S)
 
@@ -197,6 +223,7 @@ def test_recv(conn: socket.socket) -> None:
     with socket_context_manager(
         'Connection test failed', conn, True
     ):
+        # brief handshake
         result = conn.recv(SockConf.TEST_S)
 
         if result != SockConf.TEST_MSG:
@@ -212,6 +239,9 @@ def test_recv(conn: socket.socket) -> None:
 # === Exports ===
 
 __all__ = [
+           'encode',
+           'decode',
+           'socket_context_manager',
            'gen_socket_conn',
            'test_send',
            'test_recv'
