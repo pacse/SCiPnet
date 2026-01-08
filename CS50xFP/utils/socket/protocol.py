@@ -153,6 +153,81 @@ class AccessExpungedData(TypedDict):
     f_id: int
 
 
+
+# === File specific AccessGranted data ===
+
+class SCPFilesData(TypedDict):
+    """Files associated with a SCP"""
+    desc: str
+    """The SCP's description"""
+    cps: str
+    """The SCP's containment procedures"""
+    addenda: dict[str, str]
+    """Any addenda as filename: content"""
+
+class MTFFilesData(TypedDict):
+    """Files associated with a MTF"""
+    mission: str
+    """The MTF's mission"""
+
+class SiteFilesData(TypedDict):
+    """Files associated with a Site"""
+    loc: str
+    """The Site's location"""
+    desc: str
+    """The Site's description"""
+    dossier: str | None
+    """The Site's dossier, if any"""
+
+class UserFilesData(TypedDict):
+    """Files associated with a User (None)"""
+    pass
+
+
+class AccessGrantedSCPData(TypedDict):
+    """AccessGranted message data for SCP files"""
+    f_type: Literal['SCP']
+    """The file type"""
+    f_model: str
+    """The dumped Pydantic model of the file"""
+    files: SCPFilesData
+    """The associated files"""
+
+class AccessGrantedMTFData(TypedDict):
+    """AccessGranted message data for MTF files"""
+    f_type: Literal['MTF']
+    """The file type"""
+    f_model: str
+    """The dumped Pydantic model of the file"""
+    files: MTFFilesData
+    """The associated files"""
+
+class AccessGrantedSiteData(TypedDict):
+    """AccessGranted message data for Site files"""
+    f_type: Literal['SITE']
+    """The file type"""
+    f_model: str
+    """The dumped Pydantic model of the file"""
+    files: SiteFilesData
+    """The associated files"""
+
+class AccessGrantedUserData(TypedDict):
+    """AccessGranted message data for User files"""
+    f_type: Literal['USER']
+    """The file type"""
+    f_model: str
+    """The dumped Pydantic model of the file"""
+    files: UserFilesData
+    """The associated files"""
+
+
+AccessGrantedData = (
+    AccessGrantedSCPData | AccessGrantedMTFData |
+    AccessGrantedSiteData | AccessGrantedUserData
+)
+
+
+
 # === Message Types ===
 
 class AuthRequest(TypedDict):
@@ -186,7 +261,7 @@ class AccessExpunged(TypedDict):
 
 class AccessGranted(TypedDict):
     type: Literal[MessageTypes.ACCESS_GRANTED]
-    data: dict[str, str]
+    data: AccessGrantedData
 
 
 
@@ -199,7 +274,8 @@ AccessMessages = (
 )
 AccessDatas = (
     AccessRequestData | AccessRedactedData |
-    AccessExpungedData | AccessTypeFailData
+    AccessExpungedData | AccessTypeFailData |
+    AccessGrantedData
 )
 
 Message = AuthMessages | AccessMessages
@@ -209,7 +285,15 @@ MessageData = AuthDatas | AccessDatas
 """Generic Message Data TypedDict"""
 
 
-format_map = {
+access_granted_format_map: dict[str, type[AccessGrantedData]] = {
+    'SCP': AccessGrantedSCPData,
+    'MTF': AccessGrantedMTFData,
+    'SITE': AccessGrantedSiteData,
+    'USER': AccessGrantedUserData,
+}
+"""Maps file types to their respective AccessGranted Data TypedDicts"""
+
+format_map: dict[MessageTypes, type[MessageData]] = {
     MessageTypes.AUTH_REQUEST: AuthRequestData,
     MessageTypes.AUTH_FAILED: AuthFailedData,
     MessageTypes.AUTH_SUCCESS: AuthSuccessData,
@@ -219,11 +303,15 @@ format_map = {
     MessageTypes.ACCESS_REDACTED: AccessRedactedData,
     MessageTypes.ACCESS_EXPUNGED: AccessExpungedData,
 }
-"""Maps MessageTypes to their respective Data TypedDicts"""
+"""
+Maps MessageTypes to their respective Data TypedDicts
+(`AccessGranted` is excluded, view `access_granted_format_map` instead)
+"""
 
 
 
 # === Exports ===
+# Namespaces for easier imports
 
 class Messages:
     """
@@ -274,6 +362,7 @@ class MessageDatas:
     AccessTypeFailData = AccessTypeFailData
     AccessRedactedData = AccessRedactedData
     AccessExpungedData = AccessExpungedData
+    AccessGrantedData = AccessGrantedData
 
 
 __all__ = [
@@ -285,5 +374,6 @@ __all__ = [
            'Messages',
            'MessageDatas',
 
+           'access_granted_format_map',
            'format_map',
           ]
