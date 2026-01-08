@@ -41,7 +41,7 @@ DB_URL = f'sqlite:///{DB_PATH}'
 
 
 # === SQLAlchemy Config ===
-_DEBUG_MODE = True
+_DEBUG_MODE = False
 """Whether to run the database in debug mode (echo SQL queries)"""
 
 POOL_CONFIG = {
@@ -54,7 +54,7 @@ POOL_CONFIG = {
 """Connection pool configuration"""
 
 SQLITE_CONFIG = {
-    'isolation_level': 'SERIALIZABLE',     # 
+    'isolation_level': 'SERIALIZABLE',     #
     'echo': _DEBUG_MODE,                   # log SQL queries in debug mode
     'connect_args': {
         'timeout': 30,                    # seconds to wait for transaction completion
