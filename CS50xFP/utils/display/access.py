@@ -7,22 +7,27 @@ Display functions related to file access
 """
 
 from .core.boxes import basic_box_with_text
-from ..general.display_config import AccessMessages as AM
+from ..general.display_config import AccessMessages as AM, \
+                                     GeneralMessages as GM, \
+                                     CreateMessages as CM
 from ..general.validation import validate_str
 
 
 def redacted(
-             file_ref: str,
+             file_type: str,
+             file_id: int | str,
              file_classification: str,
              usr_clearance: str
             ) -> None:
     """
-    prints a message saying `file_ref` is above your clearance
+    Prints a message saying `file_type` `file_id` is above your clearance
 
     Parameters
     ----------
-    file_ref : str
-        the file reference being accessed
+    file_type : str
+        the type of the file being accessed
+    file_id : int | str
+        the ID of the file being accessed
     file_classification : str
         the classification level of the file
     usr_clearance : str
@@ -43,7 +48,8 @@ def redacted(
 
     # validation
     for v, v_name in [
-                      (file_ref, 'file_ref'),
+                      (file_type, 'file_type'),
+                      (str(file_id), 'file_id'),
                       (file_classification, 'file_classification'),
                       (usr_clearance, 'usr_clearance')
                      ]:
@@ -52,7 +58,7 @@ def redacted(
     basic_box_with_text(
                         [AM.REDACTED_BOX],
                         [
-                         AM.REDACTED_FILE.format(file_ref=file_ref),
+                         AM.REDACTED_FILE.format(file_type=file_type, file_id=file_id),
                          AM.REDACTED_REQUIRED.format(
                             file_clear=file_classification
                          ),
@@ -61,14 +67,16 @@ def redacted(
                        )
 
 
-def expunged(file_ref: str) -> None:
+def expunged(file_type: str, file_id: int | str) -> None:
     """
-    prints a message saying `file_ref` has been expunged
+    prints a message saying `file_type` `file_id` has been expunged
 
     Parameters
     ----------
-    file_ref : str
-        the file reference being accessed
+    file_type : str
+        the type of the file being accessed
+    file_id : int | str
+        the ID of the file being accessed
 
     Raises
     ------
@@ -83,22 +91,25 @@ def expunged(file_ref: str) -> None:
     - Art by ChatGPT
     """
 
-    validate_str('file_ref', file_ref)
+    validate_str('file_type', file_type)
+    validate_str('file_id', str(file_id))
 
     basic_box_with_text(
                         [AM.EXPUNGED_BOX],
-                        [AM.EXPUNGED_FILE.format(file_ref=file_ref)],
+                        [AM.EXPUNGED_FILE.format(file_type=file_type, file_id=file_id)],
                        )
 
 
-def granted(file_ref: str) -> None:
+def granted(file_type: str, file_id: int | str) -> None:
     """
     prints a message saying access has been granted to `file_ref`
 
     Parameters
     ----------
-    file_ref : str
-        the file reference being accessed
+    file_type : str
+        the type of the file being accessed
+    file_id : int | str
+        the ID of the file being accessed
 
     Raises
     ------
@@ -112,10 +123,29 @@ def granted(file_ref: str) -> None:
     - Calls `basic_box_with_text()` with `RAISA_log = True`
     - Art by ChatGPT
     """
-
-    validate_str('file_ref', file_ref)
+    validate_str('file_type', file_type)
+    validate_str('file_id', str(file_id))
 
     basic_box_with_text(
                         [AM.GRANTED_BOX],
-                        [AM.GRANTED_FILE.format(file_ref=file_ref)],
+                        [AM.GRANTED_FILE.format(
+                            file_type=file_type,
+                            file_id=file_id)
+                        ]
+                       )
+
+
+def invalid_response() -> None:
+    """
+    Tells a user that the server sent an invalid response
+
+
+    Notes
+    -----
+    - Calls `basic_box_with_text()` with `RAISA_log = True`
+    """
+
+    basic_box_with_text(
+                        [GM.INVALID_RESPONSE_BOX],
+                        [*CM.TRY_AGAIN]
                        )
