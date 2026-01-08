@@ -21,6 +21,29 @@ from ..general.validation import validate_str
 from ..sql.transformers import Models
 
 
+def _p_fname(fname: str) -> str:
+    """
+    Processes a filename for display
+
+    Parameters
+    ----------
+    fname : str
+        The filename to process
+
+    Returns
+    -------
+    str
+        The processed filename
+
+    Raises
+    ------
+    TypeError
+        If `fname` is not a string
+    ValueError
+        If `fname` is an empty string
+    """
+    return unquote(fname).removesuffix('.md')
+
 def _display_additional_files(
                               additional: dict[str, str] | None,
                               console: Console
@@ -56,12 +79,13 @@ def _display_additional_files(
 
 
     while True: # keep offering files till user closes
+        print()
 
         if names:
-            print('\nDisplay additional files?')
+            print('Display additional files?')
 
         for i, name in enumerate(names):
-            print(f'{i}: {unquote(name)}') # name is fname, so quoted
+            print(f'{i}: {_p_fname(name)}')
 
         print('C: close file')
 
@@ -78,7 +102,7 @@ def _display_additional_files(
 
                 # access file & print
                 name = names[idx]
-                print_md_title(unquote(name), additional[name], console)
+                print_md_title(_p_fname(name), additional[name], console)
 
                 # don't offer it again
                 names.remove(name)

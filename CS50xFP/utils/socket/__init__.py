@@ -5,10 +5,14 @@ Contains
 --------
 - Msg
 - Protocol
+- MessageTypes
+
 - send
 - recv
+
 - test_send
 - test_recv
+
 - gen_socket_conn
 """
 
@@ -34,7 +38,6 @@ from .protocol import (
 )
 
 from .helpers import gen_socket_conn, test_send, test_recv
-
 
 class Msg:
     """
@@ -86,6 +89,8 @@ class Protocol:
 __all__ = [
            'send',
            'recv',
+
+           'MessageTypes',
 
            'Msg',
            'Protocol',

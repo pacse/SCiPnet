@@ -14,7 +14,7 @@ Contains
 - format_map
 """
 
-from typing import Any, TypedDict, Literal
+from typing import TypedDict, Literal
 from enum import StrEnum
 
 # === Message Formats ===
@@ -84,10 +84,10 @@ class AuthSuccessData(TypedDict):
 
     Parameters
     ----------
-    user : dict[str, Any]
+    user : str
         The dumped Pydantic User model
     """
-    user: dict[str, Any]
+    user: str
 
 
 class AccessRequestData(TypedDict):
@@ -101,7 +101,7 @@ class AccessRequestData(TypedDict):
     f_id : int
         The ID of the file
     """
-    f_type: str
+    f_type: Literal['SCP', 'MTF', 'SITE', 'USER']
     f_id: int
 
 class AccessTypeFailData(TypedDict):
@@ -149,7 +149,7 @@ class AccessExpungedData(TypedDict):
     f_id : int
         The ID of the file
     """
-    f_type: str
+    f_type: Literal['SCP', 'MTF', 'SITE', 'USER']
     f_id: int
 
 

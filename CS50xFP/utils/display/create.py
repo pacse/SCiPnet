@@ -1,9 +1,20 @@
 """
 Display functions related to file creation
+
+Contains
+--------
+- create_f
+- clearance_denied
+- invalid_f_type
+- invalid_f_data
+- no_data_recvd
+- no_response
+- created_f
 """
 
 from .core.boxes import basic_box_with_text
-from ..general.display_config import CreateMessages as CM
+from ..general.display_config import CreateMessages as CM, \
+                                     GeneralMessages as GM
 from ..general.validation import validate_str, validate_int
 
 
@@ -140,7 +151,7 @@ def no_response() -> None:
     art by ChatGPT, formatting by me
     """
     basic_box_with_text(
-                        [CM.NO_RESPONSE_BOX],
+                        [GM.NO_RESPONSE_BOX],
                         [*CM.TRY_AGAIN]
                        )
 

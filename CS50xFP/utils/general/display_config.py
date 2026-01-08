@@ -391,7 +391,7 @@ class AccessMessages:
     # redacted()
     REDACTED_BOX = 'ACCESS DENIED'
     """Box title for redacted access message"""
-    REDACTED_FILE = 'FILE_REF: {file_ref} REDACTED'
+    REDACTED_FILE = 'FILE_REF: {file_type} {file_id} REDACTED'
     """File line for redacted access message"""
     REDACTED_REQUIRED = 'CLEARANCE {file_clear} REQUIRED'
     """Clearance level required line for redacted access message"""
@@ -401,15 +401,14 @@ class AccessMessages:
     # expunged()
     EXPUNGED_BOX = 'DATA EXPUNGED'
     """Box title for expunged access message"""
-    EXPUNGED_FILE = 'FILE_REF: {file_ref} NOT FOUND'
+    EXPUNGED_FILE = 'FILE_REF: {file_type} {file_id} NOT FOUND'
     """File line for expunged access message"""
 
     # granted()
     GRANTED_BOX = 'ACCESS GRANTED'
     """Box title for granted access message"""
-    GRANTED_FILE = 'FILE_REF: {file_ref} ACCESS GRANTED'
+    GRANTED_FILE = 'FILE_REF: {file_type} {file_id} ACCESS GRANTED'
     """File line for granted access message"""
-
 
 class CreateMessages:
     """
@@ -466,12 +465,18 @@ class CreateMessages:
     NO_DATA_RECVD_BOX = 'NO DATA RECEIVED'
     """Box title for no data received message"""
 
-    # no_response()
-    NO_RESPONSE_BOX = 'NO RESPONSE FROM DEEPWELL'
-    """Box title for no response from deepwell message"""
-
     # created_f()
     FILE_CREATED_BOX = 'FILE CREATED SUCCESSFULLY'
     """Box title for file created message"""
     FILE_CREATED = 'FILE_REF: {file_ref} INITIALIZED'
     """File line for file created message"""
+
+
+class GeneralMessages:
+    # no_response()
+    NO_RESPONSE_BOX = 'NO RESPONSE FROM DEEPWELL'
+    """Box title for no response from deepwell message"""
+
+    # invalid_response()
+    INVALID_RESPONSE_BOX = 'INVALID RESPONSE FROM DEEPWELL'
+    """Box title for invalid response message"""

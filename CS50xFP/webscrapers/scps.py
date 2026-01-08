@@ -6,6 +6,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 from urllib.parse import quote
 import sys
+from pathlib import Path
 
 # function partially from claude (commented by me)
 # to handle syntax and proper display of chars
@@ -26,14 +27,24 @@ def handle_syntax(text: str) -> str:
     # replace nbsp and ellipsis in test
     return done.replace("\u00A0", " ").replace("\u2026", "...")
 
-scp = 2
 
-# page to get
-url = f"https://scp-wiki.wikidot.com/scp-{scp:03d}"
+
+# === Constants ===
+SCP = 2
+
+URL = f"https://scp-wiki.wikidot.com/scp-{SCP:03d}"
+
+
+
+# === Webscrape ===
 
 # get page content
-req = requests.get(url)
+req = requests.get(URL)
 soup = BeautifulSoup(req.content, "html.parser")
+
+
+
+# === Processing ===
 
 # remove images
 for img in soup.find_all("div", class_="scp-image-block"):
@@ -96,7 +107,7 @@ for bq in pearled_pc.find_all("blockquote"):
     # for each line in the blockquote
     for child in bq.children: # type: ignore
 
-        # convert PageElement to 
+        # convert PageElement to
         # str so we can change it
         child = str(child).strip()
         if child != "":
@@ -106,12 +117,15 @@ for bq in pearled_pc.find_all("blockquote"):
             # add markdown-ified line to lines
             lines.append(f"> {child}\n>")
     lines.append("</blockquote>")
-    
+
     # compile markdown-ified lines and replace original blockquote
     compiled = "\n".join(lines)
     #print(compiled) # DEBUG
     bq.replace_with(BeautifulSoup(compiled, "html.parser"))
 
+
+
+# === Extract text ===
 
 # get all text tags
 tags = pearled_pc.find_all(["p", "li", "blockquote"])
@@ -133,6 +147,9 @@ with open("scp.txt", "w", encoding="utf-8") as f:
 #sys.exit(0)
 '''
 
+
+# === Parse text ===
+
 # vars to store what matter
 item_num = ""
 obj_class = ""
@@ -153,7 +170,7 @@ for i, string in enumerate(text):
 
     # get item num
     if "**Item #:**" in string:
-        item_num = string.split(" ")[2].split("-")[1] 
+        item_num = string.split(" ")[2].split("-")[1]
 
     # get object class
     elif "**Object Class:**" in string:
@@ -168,7 +185,7 @@ for i, string in enumerate(text):
         # check for procedures on same line
         remainder = string.replace("**Special Containment Procedures:**", "").strip()
         SCPs = f"{remainder}\n" if remainder else ""
-    
+
     elif "**Description:**" in string:
         # update flags
         curr_section = "desc"
@@ -176,7 +193,7 @@ for i, string in enumerate(text):
         # check for desc on same line
         remainder = string.replace("**Description:**", "").strip()
         desc = f"{remainder}\n" if remainder else ""
-    
+
     # check for addenda (Twas a pain, thank you for writing most of it claude)
     elif string.startswith("**Addendum"):
         #print(string) # DEBUG
@@ -185,7 +202,7 @@ for i, string in enumerate(text):
         if curr_section == "addendum" and curr_addendum:
             addenda.append(curr_addendum)
             addenda_names.append(curr_addendum_name)
-        
+
         curr_section = "addendum"
 
         # handle addenda formats (man I wish they could just be consistent)
@@ -235,41 +252,42 @@ desc = handle_syntax(desc)
 for addendum in addenda:
     addendum = handle_syntax(addendum)
 
-# === save ===
+
+
+# === Save ===
 
 # make dirs
-# TODO: dynamically get path to deepwell
-path_to_scp = f"C:/Users/packa/Documents/GitHub/SCiPNET/CS50xFP/deepwell/scps/{scp}" # home sys
-path_to_scp = f"C:/Users/User2/Documents/GitHub/SCiPNET/CS50xFP/deepwell/scps/{scp}" # school sys
 
-os.makedirs(path_to_scp, exist_ok=True) # create dir if it doesn't exist
+path_to_scp = Path(__file__).parent / "deepwell" / "scps" / str(SCP)
 
-os.makedirs(f"{path_to_scp}/SCPs", exist_ok=True)
-os.makedirs(f"{path_to_scp}/descs", exist_ok=True)
-os.makedirs(f"{path_to_scp}/addenda", exist_ok=True)
+os.makedirs(path_to_scp, exist_ok=True)
 
-# === populate dirs ===
+os.makedirs(path_to_scp / "SCPs", exist_ok=True)
+os.makedirs(path_to_scp / "descs", exist_ok=True)
+os.makedirs(path_to_scp / "addenda", exist_ok=True)
+
+# populate dirs
 
 # special containment procedures
-with open(f"{path_to_scp}/SCPs/main.md", "w") as file:
+with open(path_to_scp / "SCPs" / "main.md", "w") as file:
     file.write(SCPs)
 
 # description
-with open(f"{path_to_scp}/descs/main.md", "w") as file:
+with open(path_to_scp / "descs" / "main.md", "w") as file:
     file.write(desc)
 
 # addenda
 for i, addendum in enumerate(addenda):
     # sanize filename
     fname = quote(addenda_names[i], safe="")
-    with open(f"{path_to_scp}/addenda/{fname}.md", "w") as file:
+    with open(path_to_scp / "addenda" / f"{fname}.md", "w") as file:
         file.write(addendum)
 
 # display md in terminal
 console = Console()
 
 # print headings
-console.print(Markdown(f"# **Item #:** SCP-{scp:03d}"))
+console.print(Markdown(f"# **Item #:** SCP-{SCP:03d}"))
 console.print(Markdown(f"## **Object Class:** {obj_class}"))
 
 print() # separator

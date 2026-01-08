@@ -134,8 +134,8 @@ mtf_3 = MainModels.MTF(name='Alpha-1', nickname='Red Right Hand')
 
 scp_1 = MainModels.SCP(id=49, name='Plague Doctor', clearance_lvl_id=6,
                        containment_class_id=2, disruption_class_id=2,
-                       risk_class_id=4)
-scp_2 = MainModels.SCP(id=2, name='The "Living" Room', clearance_lvl_id=2,
+                       risk_class_id=4, site_responsible_id=1123, assigned_task_force_id=1)
+scp_2 = MainModels.SCP(id=2, name="The 'Living' Room", clearance_lvl_id=2,
                        containment_class_id=2, disruption_class_id=1,
                        risk_class_id=2)
 

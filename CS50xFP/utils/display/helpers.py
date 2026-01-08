@@ -85,8 +85,8 @@ def print_lines(
 
     # validation
     validate_field('lines', lines, list)
-    if not all(isinstance(line, str) for line in lines):
-        raise TypeError('Expected all items in `lines` to be type str')
+    for line in lines:
+        validate_field('lines item', line, str)
 
     # print
     for line in lines:

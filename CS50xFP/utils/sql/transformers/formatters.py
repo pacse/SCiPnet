@@ -90,6 +90,21 @@ def format_site_id(id: int) -> str:
     """
     return _format_id('Site', id)
 
+def format_user_id(id: int) -> str:
+    """
+    Formats a User ID for display
+
+    Parameters
+    ----------
+    id : int
+        The User ID number
+
+    Returns
+    -------
+    str
+        The formatted User ID: f'User-{id:03d}'
+    """
+    return _format_id('User', id)
 
 
 # === Name formatters ===
@@ -205,6 +220,7 @@ class FormatIDs:
     scp = staticmethod(format_scp_id)
     mtf = staticmethod(format_mtf_id)
     site = staticmethod(format_site_id)
+    user = staticmethod(format_user_id)
 
 class FormatNames:
     mtf = staticmethod(format_mtf_name)

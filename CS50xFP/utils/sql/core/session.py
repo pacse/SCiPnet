@@ -51,6 +51,7 @@ def db_session() -> Generator[SessionType, None, None]:
     session = None
     try:
         session = Session()  # create a new session
+        session.expire_on_commit = False  # prevent DetachedInstanceErrors
         yield session        # give it to the caller
         session.commit()     # commit what they did
 

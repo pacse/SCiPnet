@@ -8,6 +8,8 @@ Contains
 """
 
 from struct import calcsize
+from typing import Literal
+
 from ..sql.schema import MainModels
 
 # === Constants ===
@@ -94,7 +96,7 @@ class Server:
     """Enable/disable debug messages"""
 
     VALID_F_TYPES: dict[
-        str,
+        Literal['SCP', 'MTF', 'SITE', 'USER'],
         type[MainModels.SCP] | type[MainModels.MTF] |
         type[MainModels.Site] | type[MainModels.User]
     ] = {

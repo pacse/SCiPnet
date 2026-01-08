@@ -170,6 +170,21 @@ class MaxSizeLimitError(Exception):
             f' maximum size ({hsize(max_size)})'
         )
 
+class MessageDecodeError(Exception):
+    """
+    Raised when a socket message fails to decode
+
+    Parameters
+    ----------
+    exception : Exception
+        The original exception raised during decoding
+
+    Error Message
+    -------------
+        >>> f'Failed to decode socket message: {exception}'
+    """
+    def __init__(self, exception: Exception):
+        super().__init__(f'Failed to decode socket message: {exception}')
 
 
 # === General exceptions ===
@@ -257,6 +272,7 @@ __all__ = [
 
            # Socket related exceptions
            'MaxSizeLimitError',
+           'MessageDecodeError',
 
            # General exceptions
            'field_error',

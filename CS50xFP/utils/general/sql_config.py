@@ -54,7 +54,7 @@ POOL_CONFIG = {
 """Connection pool configuration"""
 
 SQLITE_CONFIG = {
-    'isolation_level': 'READ COMMITTED',  # only see commited data, allows for higher throughput than SERIALIZABLE while still being safe
+    'isolation_level': 'SERIALIZABLE',     # 
     'echo': _DEBUG_MODE,                   # log SQL queries in debug mode
     'connect_args': {
         'timeout': 30,                    # seconds to wait for transaction completion
