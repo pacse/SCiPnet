@@ -3,6 +3,7 @@
 For my final project, I have chosen to create a command-line access terminal for the SCiPnet, using Python.
 
 ## Video Demo
+https://www.youtube.com/watch?v=232Fa8kEoB8
 
 ## Disclaimer of Generative AI
 
