@@ -15,14 +15,15 @@ Contains
 """
 from typing import Any, overload, Literal, cast
 
-from .protocol import (
-    MessageTypes, Messages, MessageDatas, Message, MessageData, format_map
-)
+from .protocol import MessageTypes, Messages, MessageDatas, Message, \
+                      MessageData, AccessGrantedData, format_map, \
+                      access_granted_format_map as ag_format_map
+
 
 from ..general.validation import validate_hex, validate_dict, validate_str, \
                                  validate_int, validate_enum
-from ..general.exceptions import arg_error, field_error
-from ..sql.transformers import Models as PyModels, PydanticBase
+from ..general.exceptions import field_error
+from ..sql.transformers import Models as PyModels
 from ..general.server_config import Server as ServerCfg
 
 
@@ -75,8 +76,9 @@ def gen_msg(
 @overload
 def gen_msg(
             msg_type: Literal[MessageTypes.ACCESS_GRANTED],
-            data: dict[str, str]
+            data: MessageDatas.AccessGrantedData
            ) -> Messages.AccessGranted: ...
+
 
 @overload
 def gen_msg(
@@ -115,6 +117,10 @@ def gen_msg(
     expected_format = format_map.get(validated_type)
     if expected_format:
         validate_dict('data', data, expected_format)
+
+    elif validated_type == MessageTypes.ACCESS_GRANTED:
+        pass # prevent field_error
+
     else:
         raise field_error(
             'msg_type', msg_type,
@@ -201,12 +207,14 @@ def gen_auth_success(
     AuthSuccess : dict[str, Any]
         The generated AuthSuccess message
     """
-    validate_dict('user', user.model_dump())
+    dumped = user.model_dump()
+
+    validate_dict('user', dumped)
 
     return gen_msg(
         MessageTypes.AUTH_SUCCESS,
         {
-         'user': user.model_dump()
+         'user': dumped
         }
     )
 
@@ -231,7 +239,7 @@ def gen_access_request(
         The generated AccessRequest message
     """
     validate_str('f_type', f_type)
-    validate_int('f_id', f_id)
+    validate_int('f_id', f_id, False, False)
 
     return gen_msg(
         MessageTypes.ACCESS_REQUEST,
@@ -327,7 +335,7 @@ def gen_access_expunged(
         The generated AccessExpunged message
     """
     validate_str('f_type', f_type)
-    validate_int('f_id', f_id)
+    validate_int('f_id', f_id, False, False)
 
     return gen_msg(
         MessageTypes.ACCESS_EXPUNGED,
@@ -338,8 +346,9 @@ def gen_access_expunged(
     )
 
 def gen_access_granted(
-                       data: dict[str, str]
+                       data: AccessGrantedData
                       ) -> Messages.AccessGranted:
+
     """
     Generates an AccessGranted message
 
@@ -354,6 +363,17 @@ def gen_access_granted(
         The generated AccessGranted message
     """
     validate_dict('data', data)
+
+    # validate f_type
+    f_type = data.get('f_type')
+    if not f_type or f_type not in ag_format_map.keys():
+        raise field_error(
+            'data.f_type', f_type,
+            f"to be one of: {', '.join(ag_format_map.keys())}"
+        )
+
+    # get and validate data format
+    validate_dict('data', data, ag_format_map[f_type])
 
     return gen_msg(
         MessageTypes.ACCESS_GRANTED,
