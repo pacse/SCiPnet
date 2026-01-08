@@ -7,8 +7,12 @@ Contains
 - login()
 """
 
+from typing import Literal
+
 from .helpers import clear, printc, print_lines
+from .core.boxes import fancy_box, fancy_box_with_text
 from ..general.display_config import FancyLogin as FL, Logins, Load
+from ..general.validation import validate_field, validate_str
 from ..__init__ import __version__
 from ..sql.transformers import Models
 
@@ -60,12 +64,7 @@ def startup() -> None:
     clear()
 
     # main terminal screen (ignore line length)
-    print_lines([
-        '',
-        '███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀▀▀▀███▀',
-        '███████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓███████',
-        '██ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ ░░ ██',
-        '',
+    fancy_box([
         '███████╗ ██████╗██████╗     ███████╗ ██████╗ ██╗   ██╗███╗   ██╗██████╗  █████╗ ████████╗██╗ ██████╗ ███╗   ██╗',
         '██╔════╝██╔════╝██╔══██╗    ██╔════╝██╔═══██╗██║   ██║████╗  ██║██╔══██╗██╔══██╗╚══██╔══╝██║██╔═══██╗████╗  ██║',
         '███████╗██║     ██████╔╝    █████╗  ██║   ██║██║   ██║██╔██╗ ██║██║  ██║███████║   ██║   ██║██║   ██║██╔██╗ ██║',
@@ -74,13 +73,9 @@ def startup() -> None:
         '╚══════╝ ╚═════╝╚═╝         ╚═╝      ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝',
         'Secure | Contain | Protect',
         '',
-        f'— [ ACCESS PORTAL: SCiPNET TERMINAL v{__version__} ] —',
-        '██ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ ░░ ██',
-        '███████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓███████',
-        '███▄▄▄▄███▄▄▄▄███▄▄▄▄███▄▄▄▄███▄▄▄▄███▄▄▄▄███▄▄▄▄███▄▄▄▄███▄▄▄▄███▄▄▄▄███▄▄▄▄███▄▄▄▄███▄▄▄▄███▄▄▄▄███▄▄▄▄███▄▄▄▄███▄',
-        '',
-        ''
+        f'— [ ACCESS PORTAL: SCiPNET TERMINAL v{__version__} ] —'
     ])
+    print()
 
     # simulate loading (bc it's cool)
     sim_load()
@@ -96,7 +91,7 @@ def startup() -> None:
 
 def _f_line(line: str) -> str:
         """Helper to format a line for `_gen_login_lines()`"""
-        return f'{FL.L_R}{line:^FL.CONTENT_WIDTH}{FL.L_R}'
+        return f'{FL.L_R}{line:^{FL.CONTENT_WIDTH}}{FL.L_R}'
 
 def _gen_login_lines(title: str, name: str) -> list[str]:
     """
@@ -123,12 +118,8 @@ def _gen_login_lines(title: str, name: str) -> list[str]:
                           'expected one of: '
                           f'{", ".join(valid_titles)}')
 
-    if not isinstance(name, str):
-        raise TypeError(f'expected `name` to be type str,'
-                        f' got {type(name).__name__}')
-    elif not name or name.isspace():
-        raise ValueError('name cannot be empty or whitespace')
-    elif '{' in name or '}' in name:
+    validate_str('name', name)
+    if '{' in name or '}' in name:
         raise ValueError('name cannot contain "{" or "}"')
 
     # get profile
@@ -170,16 +161,13 @@ def login(usr: Models.User) -> None:
     """
 
     # validation
-    if not isinstance(usr, Models.User):
-        raise TypeError(f'expected `usr` to be type Models.User,'
-                        f' got {type(usr).__name__}')
+    validate_field('usr', usr, Models.User)
     # rest is handled by pydantic
 
 
     # set lines depending on usr title & name
     if usr.title.name in Logins.PROFILES.keys():
         lines = _gen_login_lines(usr.title.name, usr.name)
-
     else:
         lines = [
                  '',
@@ -189,6 +177,41 @@ def login(usr: Models.User) -> None:
                 ]
 
     print_lines(lines)
+
+def login_fail(field: Literal['user_id', 'password']) -> None:
+    """
+    prints a fancy login failure message
+
+    Parameters
+    ----------
+    field : Literal['user_id', 'password']
+        the field that caused the failure
+
+    Raises
+    ------
+    ValueError
+        If `field` is not in `['user_id', 'password']`
+
+    Notes
+    -----
+    Art by ChatGPT
+    """
+
+    # validation
+    if field not in ['user_id', 'password']:
+        raise ValueError(f'Invalid field: {field!r}, '
+                          "expected one of: 'user_id', 'password'")
+
+    cred = 'IDENTIFICATION' if field == 'user_id' else 'AUTHENTICATION'
+    fancy_box_with_text(
+        [
+         f'{cred} INVALID',
+         '',
+         'ACCESS DENIED',
+         'SESSION TERMINATED'
+        ],
+        []
+    )
 
 
 
