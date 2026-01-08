@@ -4,7 +4,7 @@ Socket utilities for client and server communication
 
 # TODO: Implement TLS: after submit final project
 from struct import unpack
-from typing import Any, cast
+from typing import Any, cast, Mapping
 import socket
 
 from .helpers import encode, decode, socket_context_manager
@@ -17,7 +17,12 @@ from ..general.validation import validate_msg
 
 # === Main Funcs ===
 
-def send(conn: socket.socket, msg_type: MessageTypes, msg_data: dict[str, Any]) -> None:
+# TODO: Add overloads similar to builders.py (after submit final project)
+def send(
+         conn: socket.socket,
+         msg_type: MessageTypes,
+         msg_data: Mapping[str, Any]
+        ) -> None:
     """
     Builds a Message from `msg_type` and `msg_data` and sends it over `conn`
 
@@ -27,7 +32,7 @@ def send(conn: socket.socket, msg_type: MessageTypes, msg_data: dict[str, Any]) 
         The socket connection to send data over
     msg_type : MessageTypes
         The message type
-    msg_data : MessageData
+    msg_data : Mapping[str, Any]
         The message data
 
     Raises
@@ -47,6 +52,7 @@ def send(conn: socket.socket, msg_type: MessageTypes, msg_data: dict[str, Any]) 
         'Error sending data', conn,
     ):
         conn.sendall(data)
+
 
 def recv(conn: socket.socket) -> Message:
     """
@@ -79,7 +85,7 @@ def recv(conn: socket.socket) -> Message:
         'Error receiving data', conn,
         reraise=(MaxSizeLimitError, ConnectionError, ConnectionAbortedError)
     ):
-        # get & check size header
+        # get size header
         header = conn.recv(SockConf.HEADER_S)
 
         if not header or len(header) != SockConf.HEADER_S:
@@ -89,14 +95,21 @@ def recv(conn: socket.socket) -> Message:
 
         msg_size = unpack(SockConf.S_TYPE, header)[0]
 
+        # validate
         if msg_size > SockConf.MAX_MSG_S:
             raise MaxSizeLimitError(msg_size, SockConf.MAX_MSG_S, False)
 
+        # prevent infinite loop when receiving
+        max_chunks = msg_size // SockConf.RCV_S + 1
+        chunk_count = 0
 
         # receive exactly `msg_size` bytes
         data = b''
 
         while len(data) < msg_size:
+            if chunk_count > max_chunks:
+                raise ConnectionError('Exceeded expected message chunks')
+
             remaining = msg_size - len(data)
             buff = conn.recv(min(SockConf.RCV_S, remaining))
 
@@ -106,11 +119,11 @@ def recv(conn: socket.socket) -> Message:
                 )
 
             data += buff
+            chunk_count += 1
 
     # decode, validate, & return
     decoded = decode(data)
-    validate_msg(decoded)
-    return decoded
+    return validate_msg(decoded, Message) # type: ignore[arg-type] (bad, but works)
 
 
 # === Exports ===
