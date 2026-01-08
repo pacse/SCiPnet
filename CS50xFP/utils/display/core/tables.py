@@ -13,7 +13,9 @@ from typing import Callable, Type, TypeVar
 
 from tabulate import tabulate
 
-from ...sql.transformers import Models
+from ...sql.transformers.formatters import FormatIDs
+from ...sql.transformers import Models, RefModels
+from ...general.sql_config import NONE_STR, EXPUNGED
 
 T = TypeVar('T')
 
@@ -26,7 +28,7 @@ TABLE_CHAR_REPLACEMENTS = {
     '├': '╠', '┤': '╣', '╪': '╬',
     '┼': '╫', '╛': '╝', '╘': '╚',
     '╧': '╩', '╕': '╗', '╒': '╔',
-    '╤': '╦'
+    '╤': '╦', '─': '═', '╫': '╬'
 }
 
 def _replace_chars(text: str) -> str:
@@ -103,27 +105,35 @@ def print_table(data: list[dict[str, str]]) -> None:
 
 # === Data Formatters ===
 
-def _format_user(usr: Models.User) -> dict[str, str]:
+def _format_user(usr: Models.User | RefModels.User) -> dict[str, str]:
+    """Formats a User for table display"""
+    has_mtf = getattr(usr, 'mtf_id', None) is not None
+
     return {
             'ID': f'{usr.id:03d}',
-            'Name': _f_user_name(usr), # .display_name includes ID
-            'Clearance': usr.display_clearance,
-            'MTF Operative': 'Yes' if usr.mtf_id else 'No',
-            'Status': usr.display_active
+            'Name': f'{usr.title.name} {usr.name}',
+            'Clearance': usr.clearance_lvl.name,
+            'MTF Operative': 'Yes' if has_mtf else 'No',
+            'Status': 'Active' if usr.is_active else 'Inactive'
            }
 
-def _format_scp(scp: Models.SCP) -> dict[str, str]:
+def _format_scp(scp: Models.SCP | RefModels.SCP) -> dict[str, str]:
+    """Formats a SCP for table display"""
+    secondary = getattr(scp, 'secondary_class', None)
+    disruption = getattr(scp, 'disruption_class', None)
+    risk = getattr(scp, 'risk_class', None)
+
     return {
-            'ID': scp.display_id,
-            'Classification Level': scp.display_clearance,
-            'Containment Class': scp.display_containment,
-            'Secondary Class': scp.display_secondary,
-            'Risk Class': scp.display_risk,
-            'Disruption Class': scp.display_disruption,
-            'Assigned MTF': scp.display_mtf,
+            'ID': FormatIDs.scp(scp.id),
+            'Classification Level': scp.clearance_lvl.name,
+            'Containment Class': scp.containment_class.name,
+            'Secondary Class': secondary.name if secondary else NONE_STR,
+            'Risk Class': risk.name if risk else EXPUNGED,
+            'Disruption Class': disruption.name if disruption else EXPUNGED,
+            'Assigned MTF': scp.mtf.name if scp.mtf else NONE_STR,
            }
 
-def _format_mtf(mtf: Models.MTF) -> dict[str, str]:
+def _format_mtf(mtf: Models.MTF | RefModels.MTF) -> dict[str, str]:
     return {
             'ID': f'{mtf.id:03d}',
             'Name': f"{mtf.name} '{mtf.nickname}'",
@@ -141,7 +151,6 @@ def _format_audit_log(log: Models.AuditLog) -> dict[str, str]:
 
 
 def _print_generic_table(
-                         data_type: Type[T],
                          data: list[T],
                          formatter: Callable[[T], dict[str, str]]
                         ) -> None:
@@ -153,9 +162,6 @@ def _print_generic_table(
     # validation
     if not data:
         raise ValueError('data must contain at least one entry')
-
-    if not all(isinstance(entry, data_type) for entry in data):
-        raise TypeError(f'all data entries must be {data_type.__name__}s')
 
     dict_data = [formatter(entry) for entry in data]
 
@@ -180,17 +186,16 @@ def print_table_audit_logs(data: list[Models.AuditLog]) -> None:
         If `data` is empty
     TypeError
         If any element in `data` is not an AuditLog
-
     """
-    _print_generic_table(Models.AuditLog, data, _format_audit_log)
+    _print_generic_table(data, _format_audit_log)
 
-def print_table_mtfs(data: list[Models.MTF]) -> None:
+def print_table_mtfs(data: list[Models.MTF | RefModels.MTF]) -> None:
     """
     Prints a table of MTFs
 
     Parameters
     ----------
-    data : list[Models.MTF]
+    data : list[Models.MTF | RefModels.MTF]
         The MTFs to be displayed
 
     Raises
@@ -201,15 +206,15 @@ def print_table_mtfs(data: list[Models.MTF]) -> None:
         If any element in `data` is not a MTF
 
     """
-    _print_generic_table(Models.MTF, data, _format_mtf)
+    _print_generic_table(data, _format_mtf)
 
-def print_table_scps(data: list[Models.SCP]) -> None:
+def print_table_scps(data: list[Models.SCP | RefModels.SCP]) -> None:
     """
     Prints a table of SCPs
 
     Parameters
     ----------
-    data : list[Models.SCP]
+    data : list[Models.SCP | RefModels.SCP]
         The SCPs to be displayed
 
     Raises
@@ -220,15 +225,15 @@ def print_table_scps(data: list[Models.SCP]) -> None:
         If any element in `data` is not a SCP
 
     """
-    _print_generic_table(Models.SCP, data, _format_scp)
+    _print_generic_table(data, _format_scp)
 
-def print_table_users(data: list[Models.User]) -> None:
+def print_table_users(data: list[Models.User | RefModels.User]) -> None:
     """
     Prints a table of users
 
     Parameters
     ----------
-    data : list[Models.User]
+    data : list[Models.User | RefModels.User]
         The users to be displayed
 
     Raises
@@ -239,8 +244,7 @@ def print_table_users(data: list[Models.User]) -> None:
         If any element in `data` is not a User
 
     """
-
-    _print_generic_table(Models.User, data, _format_user)
+    _print_generic_table(data, _format_user)
 
 
 
