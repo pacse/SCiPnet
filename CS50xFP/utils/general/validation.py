@@ -7,21 +7,59 @@ Contains
 """
 
 import socket
-from typing import Any, get_type_hints
+from types import UnionType
+from typing import Any, Literal, cast, get_type_hints, TypeVar, Mapping, \
+                   get_args, get_origin, is_typeddict
 from enum import Enum
 from re import fullmatch
-from typing import TypeVar
-from ipaddress import IPv4Address, IPv6Address, ip_address
+from ipaddress import ip_address
 
 from .exceptions import arg_error, field_error, ColumnNotFoundError
 from .server_config import Server
 from ..sql.schema import ORMBase
-from ..socket.protocol import MESSAGE_KEYS, format_map, MessageTypes, \
-                              MessageData
+from ..socket.protocol import MESSAGE_KEYS, MessageTypes, Message, \
+                              format_map, access_granted_format_map
 
 
 E = TypeVar('E', bound=Enum)
+M = TypeVar('M', bound=Message)
 HEX_REGEX = r'^#[0-9a-fA-F]{6}$'
+
+
+
+# === Helpers ===
+
+def _check_type(val: Any, expected: type) -> bool:
+    """
+    Helper to check if `val` is of type `expected`
+
+    Parameters
+    ----------
+    val : Any
+        The value to check
+    expected : type
+        The expected type
+
+    Returns
+    -------
+    bool
+        True if `val` is of type `expected`, False otherwise
+    """
+    origin = get_origin(expected)
+
+    if origin is Literal:
+        return val in get_args(expected)
+
+    elif origin is not None:
+        return isinstance(val, origin)
+
+    elif expected is None:
+        return val is None
+
+    try:
+        return isinstance(val, expected)
+    except TypeError:
+        return False
 
 
 # === General Funcs ===
@@ -53,16 +91,54 @@ def validate_field(
     - If `field` is not a non-empty str, I will gut you like a fish
     """
 
-    # handle dict[str, Any]
-    if expected_type == dict[str, Any]:
+    # Check None
+    if field_val is None:
+        raise arg_error(field, field_val, expected_type)
+
+
+    origin = get_origin(expected_type)
+    args = get_args(expected_type)
+
+    # === Literals ===
+    if origin is Literal:
+        if field_val not in args:
+            raise arg_error(field, field_val, f'one of {args}')
+        return
+
+    # === TypedDicts ===
+    if is_typeddict(expected_type):
+        validate_dict(field, field_val, expected_type)
+        return
+
+    # === dict[K, V] ===
+    if origin is dict:
         if not isinstance(field_val, dict):
-            raise arg_error(field, field_val, 'dict')
-        for key in field_val.keys():
-            if not isinstance(key, str):
-                raise arg_error(f'{field} key ({key!r})', key, str)
+            raise arg_error(field, field_val, dict)
+
+        if args:
+            k_type, v_type = args[0], args[1]
+            for k, v in field_val.items():
+                validate_field(f'{field} key', k, k_type)
+                validate_field(f'{field}[{k!r}]', v, v_type)
+        return
+
+    # === UnionTypes ===
+    if origin is UnionType:
+        if type(field_val) not in args:
+            raise arg_error(field, field_val, expected_type)
+        return
+
+    # === Generics ===
+    if origin is not None:
+        args = get_args(expected_type)
+        for arg in args:
+            if not _check_type(field_val, arg):
+                raise arg_error(field, field_val, expected_type)
+        return
+
 
     # generic handling
-    elif not isinstance(field_val, expected_type):
+    if not isinstance(field_val, expected_type):
         raise arg_error(field, field_val, expected_type)
 
 
@@ -246,7 +322,7 @@ def validate_int(
 
 def validate_dict(
                   field: str,
-                  field_val: dict[str, Any] | MessageData,
+                  field_val: Mapping[str, Any],
                   format: type | None = None
                  ) -> None:
     """
@@ -300,8 +376,9 @@ def validate_dict(
 
 
 def validate_msg(
-                 msg: dict[str, Any]
-                ) -> None:
+                 msg: Message,
+                 expected_type: type[M]
+                ) -> M:
     """
     Validates a message has the correct data format
 
@@ -318,6 +395,15 @@ def validate_msg(
         - If `msg` keys don't match the expected format
         - If `msg['type']` is not a valid MessageTypes member
         - If `msg['data']` does not match the expected format
+
+    Returns
+    -------
+    Message
+        The validated message
+
+    Notes
+    -----
+    - If `expected_type` is not a subclass of Message, I will gut you like a fish
     """
     validate_dict('message', msg)
 
@@ -330,16 +416,29 @@ def validate_msg(
     # validate & convert to enum
     msg_type = validate_enum("msg['type']", msg['type'], MessageTypes)
 
-    # get expected data format
-    expected_format = format_map.get(msg_type)
-    if not expected_format:
-        raise field_error(
-            'msg[type]', msg['type'],
-            f'valid MessageTypes member'
-        )
+    # handle AccessGranted
+    if msg_type == MessageTypes.ACCESS_GRANTED:
+        f_type = msg['data'].get('f_type')
+        if f_type not in access_granted_format_map:
+            raise field_error(
+                "msg['data']['f_type']", f_type,
+                'valid file type for AccessGranted'
+            )
+        expected_format = access_granted_format_map[f_type]
+
+    else:
+        # get expected data format
+        expected_format = format_map.get(msg_type)
+        if not expected_format:
+            raise field_error(
+                'msg[type]', msg['type'],
+                f'valid MessageTypes member'
+            )
 
     # validate data format
     validate_dict("msg['data']", msg['data'], expected_format)
+
+    return cast(M, msg)
 
 
 # === Socket Funcs ===
@@ -382,7 +481,7 @@ def validate_conn(conn: socket.socket) -> None:
 
 # === Server Funcs ===
 
-def validate_f_type(f_type: str) -> bool:
+def validate_f_type(f_type: str) -> None:
     """
     Validates `f_type` is in `Server.VALID_F_TYPES`
 
@@ -391,12 +490,16 @@ def validate_f_type(f_type: str) -> bool:
     f_type : str
         The file type to validate
 
-    Returns
-    -------
-    bool
-        True if `f_type` is valid, False otherwise
+    Raises
+    ------
+    ValueError
+        If `f_type` is not in `Server.VALID_F_TYPES`
     """
-    return f_type in Server.VALID_F_TYPES
+    if f_type not in Server.VALID_F_TYPES:
+        raise field_error(
+            'f_type', f_type,
+            f'one of {list(Server.VALID_F_TYPES.keys())}'
+        )
 
 
 def validate_model_field(
