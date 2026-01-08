@@ -19,7 +19,8 @@ Contains
 """
 
 from .models import PydanticBase, AuditLog, IDandName, MTF, SCP, \
-                    SCPColours, Site, User, get_scp_colours
+                    SCPColours, Site, User, get_scp_colours, UserRef, \
+                    SiteRef, MTFRef, SCPRef
 
 
 # Define Models class BEFORE importing convert to avoid circular import
@@ -32,6 +33,12 @@ class Models:
     User = User
 
     IDandName = IDandName
+
+class RefModels:
+    MTF = MTFRef
+    SCP = SCPRef
+    Site = SiteRef
+    User = UserRef
 
 
 # Import convert AFTER Models is defined to avoid circular import

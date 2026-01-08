@@ -30,7 +30,7 @@ class FromAttributesMixin(Base):
     Mixin to allow generation from SQLAlchemy models
     """
     model_config = {
-        'from_attributes': True
+        'from_attributes': True,
     }
 
 
@@ -73,6 +73,82 @@ def computed_property(func: Callable[..., Any]) -> property:
     Decorator to shorten @computed_field + @property usage
     """
     return computed_field(property(func))
+
+
+
+# === Reference Models === (prevent infinite recursion)
+
+class UserRef(PydanticBase):
+    """
+    BaseModel to store minimal User information
+    to prevent infinite recursion in other models
+
+    Parameters
+    ----------
+    id : int
+    name : str
+    title : IDandName
+    clearance_lvl : IDandName
+    is_active : bool = False
+    created_at : datetime
+    updated_at : datetime
+    """
+    name: str
+    title: IDandName
+    clearance_lvl: IDandName
+    is_active: bool = False
+
+class SCPRef(PydanticBase):
+    """
+    BaseModel to store minimal SCP information
+    to prevent infinite recursion in other models
+
+    Parameters
+    ----------
+    id : int
+    name : str
+    clearance_lvl : IDandName
+    containment_class : IDandName
+    created_at : datetime
+    updated_at : datetime
+    """
+    name: str
+    clearance_lvl: IDandName
+    containment_class: IDandName
+    mtf: "MTFRef | None" = None
+
+class MTFRef(PydanticBase):
+    """
+    BaseModel to store minimal MTF information
+    to prevent infinite recursion in other models
+
+    Parameters
+    ----------
+    id : int
+    name : str
+    title : IDandName
+    clearance_lvl : IDandName
+    is_active : bool = False
+    created_at : datetime
+    updated_at : datetime
+    """
+    name: str
+    nickname: str
+    active: bool = True
+
+class SiteRef(PydanticBase):
+    """
+    BaseModel to store minimal Site information
+    to prevent infinite recursion in other models
+
+    Parameters
+    ----------
+    id : int
+    name : str
+    created_at : datetime
+    updated_at : datetime
+    """
+    name: str
 
 
 
@@ -244,11 +320,11 @@ class Site(PydanticBase):
     """
 
     name: str
-    director: "User | None" = None
+    director: UserRef | None = None
 
-    staff: list["User"]
-    scps: list["SCP"]
-    mtfs: list["MTF"]
+    staff: list[UserRef]
+    scps: list[SCPRef]
+    mtfs: list[MTFRef]
 
 
     @computed_property
@@ -319,12 +395,12 @@ class MTF(PydanticBase):
 
     name: str
     nickname: str
-    leader: "User | None" = None
-    site: "Site | None" = None
+    leader: UserRef | None = None
+    site: SiteRef | None = None
     active: bool = True
 
-    scps: list["SCP"]
-    members: list["User"]
+    scps: list[SCPRef]
+    members: list[UserRef]
 
 
     @computed_property
@@ -470,7 +546,7 @@ class SCP(PydanticBase):
     risk_class: IDandName | None = None
 
     site_responsible_id: int | None = None
-    mtf: "MTF | None" = None
+    mtf: MTFRef | None = None
 
 
     @computed_property
@@ -623,6 +699,11 @@ def get_scp_colours(scp: SCP) -> SCPColours:
 
 
 # Resolve forward references (Pointed out by Copilot)
+UserRef.model_rebuild()
+SCPRef.model_rebuild()
+MTFRef.model_rebuild()
+SiteRef.model_rebuild()
+
 User.model_rebuild()
 Site.model_rebuild()
 MTF.model_rebuild()
